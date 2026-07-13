@@ -122,15 +122,39 @@ input,select,textarea{ font-family:inherit; }
 
 /* tabs */
 .tabs{
-  display:flex; gap:6px; margin-top:14px; background:var(--bg-panel);
+  display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; background:var(--bg-panel);
   border:1px solid var(--border); border-radius:12px; padding:4px;
 }
 .tab-btn{
-  flex:1; border:none; background:transparent; color:var(--text-dim);
+  flex:1 1 45%; border:none; background:transparent; color:var(--text-dim);
   padding:10px 6px; border-radius:9px; font-size:13px; font-weight:600;
-  transition:.15s ease;
+  transition:.15s ease; white-space:nowrap;
 }
 .tab-btn.active{ background:var(--accent-soft); color:var(--accent); }
+
+/* gold panel */
+.gold-panel{
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px 16px;
+}
+.gold-title{ font-size:15px; font-weight:700; margin-bottom:14px; }
+.gold-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:13px 0; border-bottom:1px solid var(--border-soft);
+}
+.gold-row:last-of-type{ border-bottom:none; }
+.gold-label{ font-size:13.5px; color:var(--text-dim); font-weight:600; }
+.gold-input-wrap{ display:flex; align-items:center; gap:6px; }
+.gold-input{
+  width:110px; text-align:right; background:var(--bg-card); border:1px solid var(--border);
+  color:var(--gold); font-weight:700; font-size:15px; border-radius:8px; padding:8px 10px;
+}
+.gold-suffix{ color:var(--text-faint); font-size:12px; }
+.gold-total{
+  margin-top:16px; padding-top:14px; border-top:1px solid var(--border);
+  font-size:14px; color:var(--text-dim); text-align:right;
+}
+.gold-total b{ color:var(--gold); font-size:18px; }
 
 /* ---------- CONTENT ---------- */
 .content{ padding:14px 18px 0 18px; }
@@ -420,6 +444,7 @@ input,select,textarea{ font-family:inherit; }
       activeTab:"full",
       openCats:{spell:true, ability:true, item:true, feature:true},
       expanded:{},
+      gold:{cash:0, bank:0, stash:0},
       updatedAt: 0
     };
   }
@@ -633,10 +658,33 @@ input,select,textarea{ font-family:inherit; }
     var html = "";
     html += renderHeader();
     html += '<div class="content">';
-    CAT_ORDER.forEach(function(cat){ html += renderCategory(cat); });
+    if(state.activeTab === "gold"){
+      html += renderGoldPanel();
+    } else {
+      CAT_ORDER.forEach(function(cat){ html += renderCategory(cat); });
+    }
     html += "</div>";
     document.getElementById("app").innerHTML = html;
     bindEvents();
+  }
+
+  function renderGoldPanel(){
+    if(!state.gold) state.gold = {cash:0, bank:0, stash:0};
+    var g = state.gold;
+    var h = '<div class="gold-panel">';
+    h += '<div class="gold-title">💰 Твоя голда</div>';
+    h += goldRow("cash","Наличка", g.cash);
+    h += goldRow("bank","Счёт в банке", g.bank);
+    h += goldRow("stash","Общий стеш (пати)", g.stash);
+    var total = (Number(g.cash)||0) + (Number(g.bank)||0) + (Number(g.stash)||0);
+    h += '<div class="gold-total">Итого: <b>'+total+' зм</b></div>';
+    h += '</div>';
+    return h;
+  }
+  function goldRow(key, label, val){
+    return '<div class="gold-row"><div class="gold-label">'+label+'</div><div class="gold-input-wrap">'
+      + '<input type="number" inputmode="numeric" class="gold-input" data-gold-key="'+key+'" value="'+(Number(val)||0)+'">'
+      + '<span class="gold-suffix">зм</span></div></div>';
   }
 
   function renderHeader(){
@@ -687,6 +735,7 @@ input,select,textarea{ font-family:inherit; }
     h += '<div class="tabs">';
     h += tabBtn("combat","⚔️ Боевой режим");
     h += tabBtn("social","🗣️ Социальный режим");
+    h += tabBtn("gold","💰 Моя голда");
     h += tabBtn("full","🎒 Полный лист");
     h += '</div>';
 
@@ -1039,6 +1088,20 @@ input,select,textarea{ font-family:inherit; }
         var id = el.getAttribute("data-id");
         var it = state.items.find(function(i){ return i.id===id; });
         if(it) openForm(it.category, it);
+      });
+    });
+    document.querySelectorAll('[data-gold-key]').forEach(function(el){
+      el.addEventListener("input", function(){
+        if(!state.gold) state.gold = {cash:0, bank:0, stash:0};
+        var key = el.getAttribute("data-gold-key");
+        var v = parseFloat(el.value);
+        state.gold[key] = isNaN(v) ? 0 : v;
+        save();
+        var totalB = document.querySelector(".gold-total b");
+        if(totalB){
+          var total = (Number(state.gold.cash)||0) + (Number(state.gold.bank)||0) + (Number(state.gold.stash)||0);
+          totalB.textContent = total + " зм";
+        }
       });
     });
     document.querySelectorAll('[data-action="delete-item"]').forEach(function(el){
