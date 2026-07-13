@@ -195,6 +195,19 @@ input,select,textarea{ font-family:inherit; }
 .filter-chip{ border:1.5px solid var(--border); background:var(--bg-card); color:var(--text-dim); border-radius:20px; padding:7px 14px; font-size:12.5px; font-weight:600; }
 .filter-chip.active{ border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
 
+/* inventory extras */
+.item.quest-item{ background:rgba(216,181,108,.07); border-left:2px solid var(--gold); }
+.equipped-badge{ font-size:9.5px; font-weight:700; color:var(--success); border:1px solid var(--success); border-radius:20px; padding:1px 7px; margin-left:6px; vertical-align:middle; text-transform:uppercase; letter-spacing:.4px; }
+.qty-stepper{ display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+.qty-btn{ width:24px; height:24px; border-radius:7px; border:1px solid var(--border); background:var(--bg-card); color:var(--accent); font-size:15px; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; }
+.qty-btn:active{ background:var(--bg-card-hover); }
+.qty-val{ font-size:13px; font-weight:700; color:var(--text); min-width:16px; text-align:center; }
+.type-select-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.type-opt{ border:1.5px solid var(--border); background:var(--bg-card); color:var(--text-dim); border-radius:20px; padding:7px 12px; font-size:12.5px; font-weight:600; }
+.type-opt.sel{ border-color:var(--gold); color:var(--gold); background:rgba(216,181,108,.12); }
+.equip-toggle-btn{ border:1px solid var(--border); background:var(--bg-card); color:var(--text-dim); border-radius:8px; padding:6px 12px; font-size:12px; font-weight:600; }
+.equip-toggle-btn.on{ border-color:var(--success); color:var(--success); }
+
 /* ---------- CONTENT ---------- */
 .content{ padding:14px 18px 0 18px; }
 .category{
@@ -369,6 +382,17 @@ input,select,textarea{ font-family:inherit; }
     feature: { icon:"🧬", title:"Классовые особенности" }
   };
   var CAT_ORDER = ["spell","ability","item","feature"];
+
+  var ITEM_TYPE_META = {
+    quest:   { icon:"⭐", label:"Квестовые предметы" },
+    weapon:  { icon:"⚔️", label:"Оружие" },
+    armor:   { icon:"🛡️", label:"Броня" },
+    potion:  { icon:"🧪", label:"Зелья и расходники" },
+    scroll:  { icon:"📜", label:"Свитки" },
+    tool:    { icon:"🛠️", label:"Инструменты" },
+    misc:    { icon:"🎒", label:"Разное" }
+  };
+  var ITEM_TYPE_ORDER = ["quest","weapon","armor","potion","scroll","tool","misc"];
 
   function seedItems(){
     return [
@@ -794,6 +818,14 @@ input,select,textarea{ font-family:inherit; }
       else s.activeTab = "sheet";
     }
     if(["sheet","spells","inventory"].indexOf(s.activeTab)===-1) s.activeTab = "sheet";
+    if(s.items){
+      s.items.forEach(function(it){
+        if(it.category==="item"){
+          if(!it.itemType) it.itemType = "misc";
+          if(!it.tracked && it.qty==null) it.qty = 1;
+        }
+      });
+    }
     return s;
   }
 
@@ -931,7 +963,92 @@ input,select,textarea{ font-family:inherit; }
   }
   function renderInventoryTab(){
     var h = renderGoldPanel();
-    h += renderCategory("item");
+    h += renderInventorySection();
+    return h;
+  }
+
+  function renderInventorySection(){
+    var items = state.items.filter(function(it){ return it.category==="item"; });
+    var open = !!state.openCats.item;
+    var h = '<div class="category">';
+    h += '<div class="category-head" data-action="toggle-cat" data-cat="item">';
+    h += '<span class="cat-icon">🎒</span><span class="cat-title">Инвентарь</span><span class="cat-count">'+items.length+'</span>';
+    h += '<button class="btn-add" data-action="add-item" data-cat="item">+ Добавить</button>';
+    h += '<span class="chevron'+(open?' open':'')+'">▶</span>';
+    h += '</div>';
+    h += '<div class="category-body'+(open?'':' closed')+'">';
+    if(!items.length){
+      h += '<div class="empty-note">Инвентарь пуст.</div>';
+    } else {
+      h += renderInventoryGrouped(items);
+    }
+    h += '</div></div>';
+    return h;
+  }
+
+  function renderInventoryGrouped(items){
+    var groups = {};
+    items.forEach(function(it){
+      var t = it.itemType || "misc";
+      if(!groups[t]) groups[t] = [];
+      groups[t].push(it);
+    });
+    var h = "";
+    ITEM_TYPE_ORDER.forEach(function(t){
+      if(!groups[t] || !groups[t].length) return;
+      var meta = ITEM_TYPE_META[t];
+      h += '<div class="level-group'+(t==="quest"?' quest-group':'')+'">';
+      h += '<div class="level-group-header">'+meta.icon+' '+meta.label+' <span class="level-group-count">'+groups[t].length+'</span></div>';
+      groups[t].forEach(function(it){ h += renderInventoryItemRow(it); });
+      h += '</div>';
+    });
+    return h;
+  }
+
+  function renderInventoryItemRow(it){
+    var expanded = !!state.expanded[it.id];
+    var t = it.itemType || "misc";
+    var isQuest = t==="quest";
+    var canEquip = (t==="weapon" || t==="armor");
+    var h = '<div class="item'+(isQuest?' quest-item':'')+'">';
+    h += '<div class="item-row" data-action="toggle-item" data-id="'+it.id+'">';
+    h += '<div class="lvl-badge" style="opacity:.6;font-size:14px;">'+ITEM_TYPE_META[t].icon+'</div>';
+    h += '<div class="item-main">';
+    h += '<div class="item-name serif">'+esc(it.name)+(canEquip && it.equipped ? ' <span class="equipped-badge">Надето</span>' : '')+'</div>';
+    var quick = it.tracked ? (it.charges.filter(Boolean).length+' / '+it.maxCharges+' зарядов') : ('×'+(it.qty||1));
+    h += '<div class="item-quick">'+quick+(it.note?(' · '+esc(it.note)):'')+'</div>';
+    h += '</div>';
+    if(it.tracked){
+      h += '<div class="mini-charges">';
+      it.charges.forEach(function(c, idx){
+        h += '<div class="mini-charge'+(c?' filled':'')+'" data-action="toggle-charge" data-id="'+it.id+'" data-idx="'+idx+'"></div>';
+      });
+      h += '</div>';
+    } else {
+      h += '<div class="qty-stepper">';
+      h += '<button class="qty-btn" data-action="qty-dec" data-id="'+it.id+'">−</button>';
+      h += '<span class="qty-val">'+(it.qty||1)+'</span>';
+      h += '<button class="qty-btn" data-action="qty-inc" data-id="'+it.id+'">+</button>';
+      h += '</div>';
+    }
+    h += '<div class="item-chevron'+(expanded?' open':'')+'">▶</div>';
+    h += '</div>'; // item-row
+
+    if(expanded){
+      h += '<div class="item-detail">';
+      h += '<div class="detail-meta"><div><b>Тип:</b> '+ITEM_TYPE_META[t].label+'</div></div>';
+      if(it.note){ h += '<div class="detail-meta"><div><b>Заметка:</b> '+esc(it.note)+'</div></div>'; }
+      h += '<div class="detail-desc">'+esc(it.desc)+'</div>';
+      h += '<div class="detail-actions">';
+      if(canEquip){
+        h += '<button class="equip-toggle-btn'+(it.equipped?' on':'')+'" data-action="toggle-equip" data-id="'+it.id+'">'+(it.equipped?'✓ Надето':'Экипировать')+'</button>';
+      }
+      h += '<button class="btn-mini" data-action="edit-item" data-id="'+it.id+'">✎ Редактировать</button>';
+      h += '<button class="btn-mini danger" data-action="delete-item" data-id="'+it.id+'">🗑 Удалить</button>';
+      h += '</div>';
+      h += '</div>';
+    }
+    h += '</div>'; // item
     return h;
   }
 
@@ -1095,13 +1212,15 @@ input,select,textarea{ font-family:inherit; }
   function blankForm(cat){
     return { editingId:null, category:cat||"spell", name:"", tags:["База"],
       level:1, castTime:"1 действие", range:"9 м", duration:"Мгновенно", school:"Воплощение", components:"В, С",
-      tracked:false, maxCharges:1, note:"", desc:"" };
+      tracked:false, maxCharges:1, note:"", desc:"",
+      itemType:"misc", qty:1, equipped:false };
   }
   function formFromItem(it){
     return { editingId: it.id, category:it.category, name:it.name, tags:it.tags.slice(),
       level: it.level!=null?it.level:1, castTime:it.castTime||"1 действие", range:it.range||"9 м",
       duration:it.duration||"Мгновенно", school:it.school||"Воплощение", components:it.components||"В, С",
-      tracked: !!it.tracked, maxCharges: it.maxCharges||1, note: it.note||"", desc: it.desc||"" };
+      tracked: !!it.tracked, maxCharges: it.maxCharges||1, note: it.note||"", desc: it.desc||"",
+      itemType: it.itemType||"misc", qty: it.qty||1, equipped: !!it.equipped };
   }
 
   function openForm(cat, editItem){
@@ -1120,6 +1239,7 @@ input,select,textarea{ font-family:inherit; }
     var f = formState;
     var isSpell = f.category==="spell";
     var isItemLike = f.category==="item" || f.category==="ability" || f.category==="feature";
+    var isInventoryItem = f.category==="item";
 
     var h = '<div class="overlay" data-action="overlay-close">';
     h += '<div class="modal" data-stop="1">';
@@ -1154,6 +1274,15 @@ input,select,textarea{ font-family:inherit; }
       h += '</div>';
     }
 
+    if(isInventoryItem){
+      h += '<div class="field"><label>Тип предмета</label><div class="type-select-row">';
+      ITEM_TYPE_ORDER.forEach(function(t){
+        var meta = ITEM_TYPE_META[t];
+        h += '<button type="button" class="type-opt'+(f.itemType===t?' sel':'')+'" data-action="set-item-type" data-type="'+t+'">'+meta.icon+' '+meta.label+'</button>';
+      });
+      h += '</div></div>';
+    }
+
     if(isItemLike){
       h += '<div class="track-toggle"><div class="switch'+(f.tracked?' on':'')+'" data-action="toggle-tracked"><div class="knob"></div></div><span style="font-size:13px;color:var(--text-dim);">Отслеживать как ресурс (счётчик зарядов сверху)</span></div>';
       if(f.tracked){
@@ -1161,7 +1290,16 @@ input,select,textarea{ font-family:inherit; }
         h += '<div class="field"><label>Макс. зарядов</label><input type="number" min="1" max="20" id="f-maxcharges" value="'+f.maxCharges+'"></div>';
         h += '<div class="field"><label>Заметка (необязательно)</label><input type="text" id="f-note" value="'+esc(f.note)+'" placeholder="Например, что сейчас загружено"></div>';
         h += '</div>';
+      } else if(isInventoryItem){
+        h += '<div class="row2">';
+        h += '<div class="field"><label>Количество</label><input type="number" min="1" id="f-qty" value="'+(f.qty||1)+'"></div>';
+        h += '<div class="field"><label>Заметка (необязательно)</label><input type="text" id="f-note" value="'+esc(f.note)+'" placeholder="Например, где найден"></div>';
+        h += '</div>';
       }
+    }
+
+    if(isInventoryItem && (f.itemType==="weapon" || f.itemType==="armor")){
+      h += '<div class="track-toggle"><div class="switch'+(f.equipped?' on':'')+'" data-action="toggle-equipped"><div class="knob"></div></div><span style="font-size:13px;color:var(--text-dim);">Экипировано сейчас</span></div>';
     }
 
     h += '<div class="field"><label>Полное описание</label><textarea id="f-desc" placeholder="Полный текст механики...">'+esc(f.desc)+'</textarea></div>';
@@ -1194,17 +1332,22 @@ input,select,textarea{ font-family:inherit; }
         renderModal();
       });
     });
-    ["f-level","f-school","f-components","f-casttime","f-range","f-duration","f-maxcharges","f-note","f-desc"].forEach(function(id){
+    ["f-level","f-school","f-components","f-casttime","f-range","f-duration","f-maxcharges","f-note","f-desc","f-qty"].forEach(function(id){
       var el = root.querySelector("#"+id);
       if(!el) return;
       var key = ({ "f-level":"level","f-school":"school","f-components":"components","f-casttime":"castTime",
-        "f-range":"range","f-duration":"duration","f-maxcharges":"maxCharges","f-note":"note","f-desc":"desc" })[id];
+        "f-range":"range","f-duration":"duration","f-maxcharges":"maxCharges","f-note":"note","f-desc":"desc","f-qty":"qty" })[id];
       el.addEventListener("input", function(){
-        formState[key] = (id==="f-level") ? parseInt(el.value,10) : (id==="f-maxcharges" ? Math.max(1, parseInt(el.value||"1",10)) : el.value);
+        formState[key] = (id==="f-level") ? parseInt(el.value,10) : (id==="f-maxcharges" || id==="f-qty") ? Math.max(1, parseInt(el.value||"1",10)) : el.value;
       });
     });
     var trackToggle = root.querySelector('[data-action="toggle-tracked"]');
     if(trackToggle) trackToggle.addEventListener("click", function(){ formState.tracked = !formState.tracked; renderModal(); });
+    root.querySelectorAll('[data-action="set-item-type"]').forEach(function(el){
+      el.addEventListener("click", function(){ formState.itemType = el.getAttribute("data-type"); renderModal(); });
+    });
+    var equipToggle = root.querySelector('[data-action="toggle-equipped"]');
+    if(equipToggle) equipToggle.addEventListener("click", function(){ formState.equipped = !formState.equipped; renderModal(); });
     var cancelBtn = root.querySelector('[data-action="cancel-form"]');
     if(cancelBtn) cancelBtn.addEventListener("click", function(){ closeForm(); });
     var saveBtn = root.querySelector('[data-action="save-form"]');
@@ -1248,6 +1391,22 @@ input,select,textarea{ font-family:inherit; }
         item.note = f.note || "";
       } else {
         delete item.maxCharges; delete item.charges; delete item.note;
+      }
+      if(f.category==="item"){
+        item.itemType = f.itemType || "misc";
+        if(!item.tracked){
+          item.qty = Math.max(1, f.qty||1);
+          item.note = f.note || "";
+        } else {
+          delete item.qty;
+        }
+        if(item.itemType==="weapon" || item.itemType==="armor"){
+          item.equipped = !!f.equipped;
+        } else {
+          delete item.equipped;
+        }
+      } else {
+        delete item.itemType; delete item.qty; delete item.equipped;
       }
     }
     save();
@@ -1395,6 +1554,30 @@ input,select,textarea{ font-family:inherit; }
           var total = (Number(state.gold.cash)||0) + (Number(state.gold.bank)||0) + (Number(state.gold.stash)||0);
           totalB.textContent = total + " зм";
         }
+      });
+    });
+    document.querySelectorAll('[data-action="qty-inc"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var id = el.getAttribute("data-id");
+        var it = state.items.find(function(i){ return i.id===id; });
+        if(it){ it.qty = (it.qty||1) + 1; save(); render(); }
+      });
+    });
+    document.querySelectorAll('[data-action="qty-dec"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var id = el.getAttribute("data-id");
+        var it = state.items.find(function(i){ return i.id===id; });
+        if(it){ it.qty = Math.max(1, (it.qty||1) - 1); save(); render(); }
+      });
+    });
+    document.querySelectorAll('[data-action="toggle-equip"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var id = el.getAttribute("data-id");
+        var it = state.items.find(function(i){ return i.id===id; });
+        if(it){ it.equipped = !it.equipped; save(); render(); }
       });
     });
     document.querySelectorAll('[data-action="delete-item"]').forEach(function(el){
