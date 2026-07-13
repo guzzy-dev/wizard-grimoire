@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Гримуар — Эвокер 10</title>
+<style>
+:root{
+  color-scheme: dark;
+  --bg:#131318;
+  --bg-panel:#1a1b21;
+  --bg-card:#1e1f26;
+  --bg-card-hover:#262832;
+  --bg-row:#202129;
+  --border:#2b2d36;
+  --border-soft:#23242c;
+  --text:#e9e7e2;
+  --text-dim:#a3a6b0;
+  --text-faint:#686b76;
+  --accent:#9584f7;
+  --accent-dim:#6f5fd6;
+  --accent-soft:rgba(149,132,247,.14);
+  --gold:#d8b56c;
+  --danger:#e2685f;
+  --danger-soft:rgba(226,104,95,.13);
+  --success:#5fd0a0;
+  --tag-combat:#e2685f;
+  --tag-combat-soft:rgba(226,104,95,.16);
+  --tag-social:#5fa8d0;
+  --tag-social-soft:rgba(95,168,208,.16);
+  --tag-base:#9584f7;
+  --tag-base-soft:rgba(149,132,247,.16);
+  --radius:16px;
+  --radius-sm:10px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+.serif{ font-family:Georgia,"Iowan Old Style","Palatino Linotype",serif; }
+#app{ max-width:900px; margin:0 auto; padding-bottom:70px; }
+button{ font-family:inherit; cursor:pointer; }
+input,select,textarea{ font-family:inherit; }
+::selection{ background:var(--accent-soft); }
+/* scrollbar */
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-thumb{ background:#33353f; border-radius:8px; }
+::-webkit-scrollbar-track{ background:transparent; }
+
+/* ---------- HEADER ---------- */
+.header{
+  position:sticky; top:0; z-index:30;
+  background:linear-gradient(180deg, var(--bg) 80%, transparent);
+  padding:18px 18px 0 18px;
+}
+.header-top{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-bottom:14px;
+}
+.title-block h1{
+  font-size:20px; margin:0; font-weight:600; letter-spacing:.2px;
+}
+.title-block .subtitle{
+  font-size:12.5px; color:var(--text-faint); margin-top:2px;
+}
+.btn-rest{
+  background:linear-gradient(160deg,var(--accent),var(--accent-dim));
+  color:#fff; border:none; border-radius:12px;
+  padding:11px 16px; font-size:13.5px; font-weight:600;
+  display:flex; align-items:center; gap:6px;
+  box-shadow:0 4px 14px rgba(149,132,247,.25);
+  white-space:nowrap;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.btn-rest:active{ transform:scale(.96); box-shadow:0 2px 6px rgba(149,132,247,.2); }
+
+/* resource panel */
+.tracker{
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px 16px 16px 16px;
+  margin-bottom:12px;
+}
+.tracker-label{
+  font-size:10.5px; text-transform:uppercase; letter-spacing:.9px;
+  color:var(--text-faint); font-weight:700; margin-bottom:10px;
+}
+.slots-row{
+  display:flex; gap:14px; overflow-x:auto; padding-bottom:2px;
+}
+.slot-col{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width:34px; flex:0 0 auto; }
+.slot-col.empty-lvl{ opacity:.28; }
+.slot-lvl-num{ font-size:11px; color:var(--text-dim); font-weight:700; }
+.slot-dots{ display:flex; flex-direction:column-reverse; gap:4px; }
+.slot-dot{
+  width:16px; height:16px; border-radius:50%;
+  border:1.5px solid var(--accent-dim);
+  background:transparent;
+  transition:.12s ease;
+}
+.slot-dot.filled{ background:var(--accent); border-color:var(--accent); box-shadow:0 0 8px rgba(149,132,247,.5); }
+.slot-dot:active{ transform:scale(.85); }
+
+.counters-row{
+  display:flex; gap:8px; overflow-x:auto; margin-top:14px; padding-bottom:2px;
+}
+.counter-chip{
+  flex:0 0 auto; background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:8px 10px; min-width:118px;
+}
+.counter-chip .cc-name{ font-size:11.5px; color:var(--text-dim); margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cc-dots{ display:flex; gap:4px; }
+.cc-dot{ width:14px; height:14px; border-radius:4px; border:1.5px solid var(--gold); background:transparent; transition:.12s ease; }
+.cc-dot.filled{ background:var(--gold); border-color:var(--gold); }
+
+/* tabs */
+.tabs{
+  display:flex; gap:6px; margin-top:14px; background:var(--bg-panel);
+  border:1px solid var(--border); border-radius:12px; padding:4px;
+}
+.tab-btn{
+  flex:1; border:none; background:transparent; color:var(--text-dim);
+  padding:10px 6px; border-radius:9px; font-size:13px; font-weight:600;
+  transition:.15s ease;
+}
+.tab-btn.active{ background:var(--accent-soft); color:var(--accent); }
+
+/* ---------- CONTENT ---------- */
+.content{ padding:14px 18px 0 18px; }
+.category{
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:var(--radius); margin-bottom:12px; overflow:hidden;
+}
+.category-head{
+  display:flex; align-items:center; gap:10px; padding:14px 16px; cursor:pointer;
+  user-select:none;
+}
+.category-head .cat-icon{ font-size:17px; }
+.category-head .cat-title{ font-weight:700; font-size:14.5px; flex:1; }
+.category-head .cat-count{
+  font-size:11px; color:var(--text-faint); background:var(--bg-card);
+  border-radius:20px; padding:2px 8px; margin-right:2px;
+}
+.btn-add{
+  border:1px solid var(--border); background:var(--bg-card); color:var(--accent);
+  border-radius:8px; padding:6px 10px; font-size:12px; font-weight:600;
+}
+.btn-add:active{ background:var(--bg-card-hover); }
+.chevron{ color:var(--text-faint); transition:transform .2s ease; font-size:11px; }
+.chevron.open{ transform:rotate(90deg); }
+.category-body{ border-top:1px solid var(--border-soft); }
+.category-body.closed{ display:none; }
+.empty-note{ padding:16px; color:var(--text-faint); font-size:13px; font-style:italic; }
+
+/* item row */
+.item{ border-bottom:1px solid var(--border-soft); }
+.item:last-child{ border-bottom:none; }
+.item-row{
+  display:flex; align-items:center; gap:12px; padding:12px 16px; cursor:pointer;
+  transition:background .12s ease;
+}
+.item-row:active{ background:var(--bg-card); }
+.lvl-badge{
+  flex:0 0 auto; width:26px; height:26px; border-radius:50%;
+  border:1.5px solid var(--gold); color:var(--gold); font-size:11.5px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.item-main{ flex:1; min-width:0; }
+.item-name{ font-size:14.5px; font-weight:600; margin-bottom:2px; }
+.item-quick{ font-size:11.5px; color:var(--text-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.item-tags{ display:flex; gap:4px; flex:0 0 auto; }
+.tag-dot{ width:7px; height:7px; border-radius:50%; }
+.tag-dot.t-base{ background:var(--tag-base); }
+.tag-dot.t-combat{ background:var(--tag-combat); }
+.tag-dot.t-social{ background:var(--tag-social); }
+.mini-charges{ display:flex; gap:3px; flex:0 0 auto; }
+.mini-charge{ width:11px; height:11px; border-radius:3px; border:1.5px solid var(--gold); background:transparent; }
+.mini-charge.filled{ background:var(--gold); border-color:var(--gold); }
+.item-chevron{ color:var(--text-faint); font-size:11px; flex:0 0 auto; transition:transform .18s ease; }
+.item-chevron.open{ transform:rotate(90deg); }
+
+.item-detail{
+  padding:2px 16px 16px 54px; animation:fadeIn .18s ease;
+}
+@keyframes fadeIn{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
+.detail-meta{
+  display:flex; flex-wrap:wrap; gap:8px 18px; margin-bottom:10px;
+}
+.detail-meta div{ font-size:12px; color:var(--text-dim); }
+.detail-meta b{ color:var(--text); font-weight:600; }
+.detail-desc{ font-size:13.5px; line-height:1.55; color:var(--text); white-space:pre-line; }
+.detail-actions{ display:flex; gap:8px; margin-top:12px; }
+.btn-mini{
+  border:1px solid var(--border); background:var(--bg-card); color:var(--text-dim);
+  border-radius:8px; padding:6px 12px; font-size:12px; font-weight:600;
+}
+.btn-mini.danger{ color:var(--danger); }
+.btn-mini:active{ background:var(--bg-card-hover); }
+
+/* modal */
+.overlay{
+  position:fixed; inset:0; background:rgba(8,8,10,.6); backdrop-filter:blur(2px);
+  display:flex; align-items:flex-end; justify-content:center; z-index:100;
+  animation:fadeIn .15s ease;
+}
+@media(min-width:640px){ .overlay{ align-items:center; } }
+.modal{
+  background:var(--bg-panel); border:1px solid var(--border);
+  border-radius:18px 18px 0 0; width:100%; max-width:560px;
+  max-height:90vh; overflow-y:auto; padding:20px;
+}
+@media(min-width:640px){ .modal{ border-radius:18px; } }
+.modal h2{ font-size:16px; margin:0 0 16px 0; }
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:11.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; font-weight:700; }
+.field input[type=text], .field input[type=number], .field select, .field textarea{
+  width:100%; background:var(--bg-card); border:1px solid var(--border); color:var(--text);
+  border-radius:10px; padding:10px 12px; font-size:14px;
+}
+.field textarea{ min-height:90px; resize:vertical; line-height:1.5; }
+.row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.row3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.chip-select{ display:flex; gap:8px; flex-wrap:wrap; }
+.chip-opt{
+  border:1.5px solid var(--border); background:var(--bg-card); color:var(--text-dim);
+  border-radius:20px; padding:7px 14px; font-size:12.5px; font-weight:600;
+}
+.chip-opt.sel-base{ border-color:var(--tag-base); color:var(--tag-base); background:var(--tag-base-soft); }
+.chip-opt.sel-combat{ border-color:var(--tag-combat); color:var(--tag-combat); background:var(--tag-combat-soft); }
+.chip-opt.sel-social{ border-color:var(--tag-social); color:var(--tag-social); background:var(--tag-social-soft); }
+.modal-actions{ display:flex; gap:10px; margin-top:6px; }
+.btn-primary{
+  flex:1; background:linear-gradient(160deg,var(--accent),var(--accent-dim)); color:#fff;
+  border:none; border-radius:10px; padding:12px; font-size:14px; font-weight:700;
+}
+.btn-secondary{
+  border:1px solid var(--border); background:transparent; color:var(--text-dim);
+  border-radius:10px; padding:12px 16px; font-size:14px; font-weight:600;
+}
+.track-toggle{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.switch{ width:38px; height:22px; border-radius:12px; background:var(--bg-card); border:1px solid var(--border); position:relative; flex:0 0 auto; }
+.switch.on{ background:var(--accent-dim); }
+.switch .knob{ position:absolute; top:2px; left:2px; width:16px; height:16px; border-radius:50%; background:var(--text); transition:.15s ease; }
+.switch.on .knob{ left:18px; background:#fff; }
+
+.fab-add-global{
+  position:fixed; bottom:20px; right:20px; z-index:40;
+  width:52px; height:52px; border-radius:50%;
+  background:linear-gradient(160deg,var(--accent),var(--accent-dim)); color:#fff;
+  border:none; font-size:24px; box-shadow:0 6px 20px rgba(149,132,247,.4);
+  display:none;
+}
+
+/* sync */
+.btn-sync{
+  border:1px solid var(--border); background:var(--bg-card); color:var(--text-dim);
+  border-radius:12px; padding:11px 12px; font-size:15px; font-weight:600;
+  display:flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap;
+  flex:0 0 auto;
+}
+.btn-sync.ok{ border-color:var(--success); color:var(--success); }
+.btn-sync.error{ border-color:var(--danger); color:var(--danger); }
+.btn-sync.syncing{ border-color:var(--gold); color:var(--gold); }
+.sync-warn{ font-size:12px; color:var(--text-faint); line-height:1.5; margin-bottom:14px; background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:10px 12px; }
+.sync-status-line{ display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:16px; }
+.sync-status-dot{ width:8px; height:8px; border-radius:50%; background:var(--text-faint); }
+.sync-status-dot.ok{ background:var(--success); }
+.sync-status-dot.error{ background:var(--danger); }
+.sync-status-dot.syncing{ background:var(--gold); }
+.sync-code-box{
+  background:var(--bg-card); border:1px solid var(--border); border-radius:10px;
+  padding:10px 12px; font-size:12px; word-break:break-all; font-family:ui-monospace,Menlo,monospace;
+  color:var(--text-dim); margin-bottom:10px; user-select:all;
+}
+.sync-divider{ display:flex; align-items:center; gap:10px; margin:16px 0; color:var(--text-faint); font-size:11px; text-transform:uppercase; letter-spacing:.6px; }
+.sync-divider::before, .sync-divider::after{ content:""; flex:1; height:1px; background:var(--border); }
+.sync-link{ color:var(--accent); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+  var STORAGE_KEY = "wizard_grimoire_state_v1";
+
+  var CAT_META = {
+    spell:   { icon:"🔮", title:"Заклинания" },
+    ability: { icon:"⚡", title:"Кастомные умения" },
+    item:    { icon:"🎒", title:"Кастомные предметы" },
+    feature: { icon:"🧬", title:"Классовые особенности" }
+  };
+  var CAT_ORDER = ["spell","ability","item","feature"];
+
+  function seedItems(){
+    return [
+      // ---------- SPELLS ----------
+      { id:"sp-firebolt", category:"spell", name:"Огненный луч", tags:["Бой"],
+        level:0, school:"Воплощение", castTime:"1 действие", range:"36 м", duration:"Мгновенно", components:"В, С",
+        desc:"Дальнобойная атака заклинанием: бросок против КД цели, при попадании 1к10 урона огнём (растёт до 2к10/3к10/4к10 на более высоких уровнях персонажа). Поджигает легковоспламеняющиеся незакреплённые предметы, которых касается." },
+      { id:"sp-prestidigitation", category:"spell", name:"Малый фокус", tags:["База","Социалка"],
+        level:0, school:"Преобразование", castTime:"1 действие", range:"3 м", duration:"До 1 часа (обычно мгновенно)", components:"В, С",
+        desc:"Один из мелких магических эффектов на выбор: очистить или испачкать предмет, зажечь/потушить небольшой огонь, создать безвредный сенсорный эффект, заморозить/подогреть/ароматизировать до 0.5кг материи, создать неброский предмет иллюзии на ладони, создать мелкую иллюзорную метку. Отлично для ролплея и мелких трюков в диалогах." },
+      { id:"sp-shield", category:"spell", name:"Щит", tags:["База"],
+        level:1, school:"Ограждение", castTime:"1 реакция (когда попадают или целятся атакой)", range:"Себя", duration:"1 раунд", components:"В, С",
+        desc:"Реакцией накладывает невидимый барьер: КД +5 до начала вашего следующего хода, включая атаку, которая вызвала реакцию, а также заклинание «Магическая стрела» не наносит вам урона вовсе." },
+      { id:"sp-magicmissile", category:"spell", name:"Магическая стрела", tags:["Бой"],
+        level:1, school:"Воплощение", castTime:"1 действие", range:"36 м", duration:"Мгновенно", components:"В, С",
+        desc:"Создаёт три светящихся снаряда силовой энергии. Каждый бьёт выбранную цель (можно распределять) на 1к4+1 урона силовым полем, попадает автоматически. На более высоких уровнях — по одному снаряду за каждый дополнительный уровень ячейки." },
+      { id:"sp-detectthoughts", category:"spell", name:"Обнаружение мыслей", tags:["Социалка"],
+        level:2, school:"Прорицание", castTime:"1 действие", range:"Себя", duration:"Конц., до 1 мин.", components:"В, С, М",
+        desc:"Пока длится, можете читать поверхностные мысли одного существа в пределах 9 м (Мудр. спасбросок, при провале — читаете). Можно копнуть глубже к конкретной теме (существо получает спасбросок с преимуществом, если провалило первый) или мысленно поговорить с целью. Каждый ход можно менять цель. Также обнаруживает присутствие мыслящих существ, которых не видите, включая невидимых." },
+      { id:"sp-web", category:"spell", name:"Паутина", tags:["Бой"],
+        level:2, school:"Иллюзия/Вызов", castTime:"1 действие", range:"18 м", duration:"Конц., до 1 часа", components:"В, С, М",
+        desc:"Заполняет кубическую зону 6 м густой липкой паутиной. Зона — труднопроходимая местность. Существа в зоне в момент каста и входящие позже совершают спасбросок Ловкости, при провале — опутаны. Опутанное существо может тратить действие на новую попытку спасброска. Паутина горюча — источник огня уничтожает её за 1 раунд, нанося урон всем внутри." },
+      { id:"sp-fireball", category:"spell", name:"Огненный шар", tags:["Бой"],
+        level:3, school:"Воплощение", castTime:"1 действие", range:"45 м", duration:"Мгновенно", components:"В, С, М",
+        desc:"Ярко-оранжевая вспышка срывается с пальца к точке по вашему выбору, где взрывается сферой радиусом 6 м. Все существа в зоне совершают спасбросок Ловкости: 8к6 урона огнём при провале, половина при успехе. Открытое пламя воспламеняет незакреплённые горючие предметы в зоне. На более высоких уровнях — +1к6 за каждый уровень ячейки выше 3-го." },
+      { id:"sp-fly", category:"spell", name:"Полёт", tags:["База"],
+        level:3, school:"Преобразование", castTime:"1 действие", range:"Касание", duration:"Конц., до 10 мин.", components:"В, С, М",
+        desc:"Касанием даёте существу скорость полёта 18 м на время действия. Когда заклинание оканчивается, а цель в воздухе, она плавно опускается, если ничто иное её не поддерживает." },
+      { id:"sp-haste", category:"spell", name:"Ускорение", tags:["Бой"],
+        level:3, school:"Преобразование", castTime:"1 действие", range:"9 м", duration:"Конц., до 1 мин.", components:"В, С, М",
+        desc:"Согласное существо получает удвоенную скорость, +2 КД, преимущество на спасброски Ловкости, и дополнительное действие каждый ход (атака / рывок / уклонение / отход / засада / применение предмета). При окончании эффекта цель на 1 ход не может действовать (эффект «затишья»)." },
+      { id:"sp-slow", category:"spell", name:"Замедление", tags:["Бой"],
+        level:3, school:"Преобразование", castTime:"1 действие", range:"36 м", duration:"Конц., до 1 мин.", components:"В, С, М",
+        desc:"До 6 существ в кубе 12 м совершают спасбросок Мудрости. При провале: скорость минус половина, −2 к КД и спасброскам Ловкости, не может реагировать, а в свой ход выбирает только действие ИЛИ бонусное действие (не оба). Повторный спасбросок в конце каждого своего хода снимает эффект при успехе." },
+      { id:"sp-wallfire", category:"spell", name:"Стена огня", tags:["Бой"],
+        level:4, school:"Воплощение", castTime:"1 действие", range:"36 м", duration:"Конц., до 1 мин.", components:"В, С, М",
+        desc:"Создаёт стену огня на выбранной поверхности (прямая или кольцо). Одна сторона стены наносит существам в пределах 3 м 5к8 урона огнём при появлении, столько же при входе или окончании хода рядом. Можно выбрать, какая сторона горячая." },
+      { id:"sp-holdmonster", category:"spell", name:"Удержание чудовища", tags:["Бой"],
+        level:5, school:"Очарование", castTime:"1 действие", range:"27 м", duration:"Конц., до 1 мин.", components:"В, С, М",
+        desc:"Одно существо (кроме нежити) совершает спасбросок Мудрости, при провале — парализовано на время действия. Цель повторяет спасбросок в конце каждого своего хода. Атаки по парализованной цели с 1.5 м автоматически критуют." },
+      { id:"sp-wallforce", category:"spell", name:"Стена силы", tags:["База"],
+        level:5, school:"Воплощение", castTime:"1 действие", range:"36 м", duration:"Конц., до 10 мин.", components:"В, С, М",
+        desc:"Невидимая силовая стена из до десяти панелей 3×3 м (или сфера/полусфера радиусом 3 м). Абсолютно неуязвима, блокирует всё, включая большинство заклинаний и телепортацию сквозь неё. Отличный инструмент — разделить поле боя или закрыть отход." }
+    ].concat([
+      // ---------- CUSTOM ABILITIES ----------
+      { id:"ab-doubleconc", category:"ability", name:"Двойная концентрация (домашнее правило)", tags:["База"],
+        tracked:false,
+        desc:"Правило нашего стола: разрешено одновременно поддерживать ДВА заклинания на концентрации, но только если одно из них наложено обычным способом (действие + ячейка как всегда), а второе — снято с Кольца хранения заклинаний. Нельзя получить вторую концентрацию двумя обычными кастами подряд. На практике: второе заклинание нужно заранее заложить в кольцо (на привале или чужим слотом), а во время боя просто активировать его действием — слот уже потрачен раньше." },
+      { id:"ab-battleplanner", category:"ability", name:"Боевое планирование", tags:["Бой"],
+        tracked:false,
+        desc:"Перед крупной стычкой стоит заранее решить: что обычным кастом (Паутина/Замедление для контроля здесь и сейчас) и что зарядить в Кольцо хранения (Стена силы/Удержание чудовища/Ускорение — то, что нужно ситуативно). Улучшает нову-раунды без траты второй ячейки." }
+    ]).concat([
+      // ---------- CUSTOM ITEMS ----------
+      { id:"it-ringstoring", category:"item", name:"Кольцо хранения заклинаний", tags:["База"],
+        tracked:true, maxCharges:5, charges:[true,true,true,true,true],
+        note:"Сейчас хранится: Стена огня (4 ур.)",
+        desc:"Редкое кольцо, требует настройки только для СНЯТИЯ заклинания (не для загрузки — зарядить может любой кастер, коснувшись кольца во время каста). Хранит суммарно до 5 уровней заклинаний 1–5 круга. Снятое заклинание использует СЛ, бонус атаки и уровень ячейки того, кто его туда заложил, но требования (компоненты, время, концентрация) не меняются — если заклинание требует концентрации, концентрируется тот, кто его освобождает. Счётчик ниже — доступная ёмкость кольца (условно, для трекинга; фактическая перезарядка — это перезаложить новое заклинание, а не «долгий отдых», но кнопка сброса всё равно приведена в порядок для удобства)." },
+      { id:"it-ringcounter", category:"item", name:"Кольцо контрспелов", tags:["База"],
+        tracked:true, maxCharges:1, charges:[true],
+        desc:"Хоумрульное кольцо стола: раз в день позволяет наложить «Контрзаклинание» реакцией без траты собственной ячейки и подготовки этого заклинания. Не требует концентрации и не мешает уже активным конкам." },
+      { id:"it-ringmisty", category:"item", name:"Кольцо мистического шага", tags:["База"],
+        tracked:true, maxCharges:1, charges:[true],
+        desc:"Хоумрульное кольцо стола: раз в день позволяет наложить «Дымный шаг» бонусным действием без траты ячейки. Не требует концентрации — свободно используется поверх любых активных конков." },
+      { id:"it-amulet", category:"item", name:"Амулет поглощения", tags:["База"],
+        tracked:true, maxCharges:3, charges:[true,true,true],
+        desc:"Пример кастомного предмета (3 заряда). Реакцией на попадание по вам вражеского заклинания потратьте 1 заряд: урон от этого заклинания снижается вдвое. Заряды восстанавливаются на долгом отдыхе. Можно свободно переименовать/отредактировать под свой лут через кнопку редактирования." }
+    ]).concat([
+      // ---------- CLASS FEATURES ----------
+      { id:"ft-spellcasting", category:"feature", name:"Заклинательство", tags:["База"],
+        tracked:false,
+        desc:"Основной каст-класс волшебника: интеллект как ключевая характеристика, книга заклинаний, подготовка заклинаний каждое утро, ритуальный каст любого известного заклинания с меткой «ритуал» без траты ячейки." },
+      { id:"ft-arcanerecovery", category:"feature", name:"Волшебное восстановление", tags:["База"],
+        tracked:true, maxCharges:1, charges:[true],
+        desc:"Раз в день, во время короткого отдыха (1 раз до следующего долгого отдыха), можно восстановить потраченные ячейки заклинаний суммарным уровнем не выше половины уровня волшебника (округление вверх), но не выше 5 круга. Отличный способ подзарядиться перед второй частью авантюры." },
+      { id:"ft-evocationsavant", category:"feature", name:"Учёный воплощения", tags:["База"],
+        tracked:false,
+        desc:"Время и стоимость переписывания заклинаний школы Воплощения в книгу заклинаний уменьшены вдвое." },
+      { id:"ft-sculptspells", category:"feature", name:"Скульптор заклинаний", tags:["Бой"],
+        tracked:false,
+        desc:"При накладывании заклинания школы Воплощения можно защитить до 1 + уровень ячейки союзников от урона: они автоматически проходят спасбросок и не получают урона, если заклинание позволяет успешный спасбросок избежать половины урона." },
+      { id:"ft-potentcantrip", category:"feature", name:"Могучий заговор", tags:["Бой"],
+        tracked:false,
+        desc:"Когда цель успешно спасается от вашего заговора, требующего спасброска, она всё равно получает половину урона (но никакие иные последствия заговора не применяются)." },
+      { id:"ft-empoweredevocation", category:"feature", name:"Усиленное воплощение", tags:["Бой"],
+        tracked:false,
+        desc:"К одному броску урона любого накладываемого вами заклинания школы Воплощения добавляется модификатор Интеллекта. Работает и при снятии заклинания воплощения с Кольца хранения, если освобождаете его именно вы (уточните у мастера — трактовка стола)." }
+    ]);
+  }
+
+  function loadState(){
+    var raw = null;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){}
+    if(raw){
+      try{
+        var parsed = JSON.parse(raw);
+        if(parsed && parsed.items && parsed.slots) return parsed;
+      }catch(e){}
+    }
+    return {
+      slots:{
+        1:{max:4, avail:[true,true,true,true]},
+        2:{max:3, avail:[true,true,true]},
+        3:{max:3, avail:[true,true,true]},
+        4:{max:3, avail:[true,true,true]},
+        5:{max:2, avail:[true,true]},
+        6:{max:0, avail:[]},
+        7:{max:0, avail:[]},
+        8:{max:0, avail:[]},
+        9:{max:0, avail:[]}
+      },
+      items: seedItems(),
+      activeTab:"full",
+      openCats:{spell:true, ability:true, item:true, feature:true},
+      expanded:{},
+      updatedAt: 0
+    };
+  }
+
+  var state = loadState();
+
+  function saveLocal(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+  function save(){ state.updatedAt = Date.now(); saveLocal(); scheduleSyncPush(); }
+
+  // ================= CLOUD SYNC (private GitHub Gist) =================
+  var SYNC_KEY = "wizard_grimoire_sync_v1";
+  var GIST_FILENAME = "wizard-grimoire-state.json";
+  var syncConfig = (function(){
+    try{ var raw = localStorage.getItem(SYNC_KEY); if(raw) return JSON.parse(raw); }catch(e){}
+    return { token:"", gistId:"" };
+  })();
+  var syncStatus = "idle"; // idle | syncing | ok | error
+  var pushTimer = null;
+
+  function hasSync(){ return !!(syncConfig.token && syncConfig.gistId); }
+  function saveSyncConfig(){ try{ localStorage.setItem(SYNC_KEY, JSON.stringify(syncConfig)); }catch(e){} }
+  function ghHeaders(){ return { "Authorization":"token "+syncConfig.token, "Content-Type":"application/json", "Accept":"application/vnd.github+json" }; }
+
+  function syncBtnClass(){ return hasSync() ? (" "+syncStatus) : ""; }
+  function syncBtnIcon(){
+    if(!hasSync()) return "☁";
+    if(syncStatus==="syncing") return "⟳";
+    if(syncStatus==="error") return "⚠";
+    return "☁";
+  }
+  function refreshSyncIndicator(){
+    var btn = document.querySelector('[data-action="open-sync"]');
+    if(btn){ btn.className = "btn-sync"+syncBtnClass(); btn.textContent = syncBtnIcon(); }
+    if(syncModalOpen) renderSyncModal();
+  }
+
+  function scheduleSyncPush(){
+    if(!hasSync()) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(doPush, 900);
+  }
+
+  function doPush(){
+    if(!hasSync()) return;
+    syncStatus = "syncing"; refreshSyncIndicator();
+    fetch("https://api.github.com/gists/"+syncConfig.gistId, {
+      method:"PATCH", headers:ghHeaders(),
+      body: JSON.stringify({ files: (function(){ var f={}; f[GIST_FILENAME]={content: JSON.stringify(state)}; return f; })() })
+    }).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); syncStatus="ok"; })
+      .catch(function(){ syncStatus="error"; })
+      .then(refreshSyncIndicator);
+  }
+
+  function pullRemote(onDone){
+    if(!hasSync()){ onDone && onDone(false); return; }
+    syncStatus = "syncing"; refreshSyncIndicator();
+    fetch("https://api.github.com/gists/"+syncConfig.gistId, { headers:ghHeaders() })
+      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+      .then(function(gist){
+        var file = gist.files && gist.files[GIST_FILENAME];
+        if(file && file.content){
+          var remote = JSON.parse(file.content);
+          if(remote && (!state.updatedAt || (remote.updatedAt||0) > state.updatedAt)){
+            state = remote;
+            saveLocal();
+          }
+        }
+        syncStatus = "ok"; refreshSyncIndicator();
+        onDone && onDone(true);
+      })
+      .catch(function(){ syncStatus="error"; refreshSyncIndicator(); onDone && onDone(false); });
+  }
+
+  function createNewGist(token, cb){
+    fetch("https://api.github.com/gists", {
+      method:"POST",
+      headers:{ "Authorization":"token "+token, "Content-Type":"application/json", "Accept":"application/vnd.github+json" },
+      body: JSON.stringify({ description:"Гримуар волшебника (Cowork) — синхронизация", public:false,
+        files:(function(){ var f={}; f[GIST_FILENAME]={content: JSON.stringify(state)}; return f; })() })
+    }).then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+      .then(function(gist){ cb(null, gist.id); })
+      .catch(function(e){ cb(e); });
+  }
+
+  var syncModalOpen = false;
+  var syncFormError = "";
+  var syncBusy = false;
+
+  function openSyncModal(){ syncModalOpen = true; syncFormError=""; renderSyncModal(); }
+  function closeSyncModal(){ syncModalOpen = false; var ex=document.getElementById("modal-root"); if(ex) ex.remove(); }
+
+  function renderSyncModal(){
+    var root = document.getElementById("modal-root");
+    if(!root){ root = document.createElement("div"); root.id="modal-root"; document.body.appendChild(root); }
+    var h = '<div class="overlay" data-action="sync-overlay-close"><div class="modal" data-stop="1">';
+    h += '<h2>☁ Синхронизация между устройствами</h2>';
+    h += '<div class="sync-warn">Данные хранятся в приватном GitHub Gist на твоём аккаунте. Токен нужен только с правом <b>gist</b> — храни код подключения как пароль и не отправляй его никому, кроме своих устройств.</div>';
+
+    var dotCls = syncStatus==="ok"?"ok":syncStatus==="error"?"error":syncStatus==="syncing"?"syncing":"";
+    var statusText = !hasSync() ? "Не подключено — данные только в этом браузере"
+      : syncStatus==="syncing" ? "Синхронизация..."
+      : syncStatus==="error" ? "Ошибка синхронизации (проверь токен/интернет)"
+      : "Подключено, синхронизировано";
+    h += '<div class="sync-status-line"><span class="sync-status-dot '+dotCls+'"></span>'+statusText+'</div>';
+
+    if(hasSync()){
+      h += '<div class="field"><label>Код для другого устройства (скопируй и вставь на нём)</label>';
+      h += '<div class="sync-code-box" id="sync-code-box">'+esc(syncConfig.gistId)+'::'+esc(syncConfig.token)+'</div>';
+      h += '<button type="button" class="btn-mini" data-action="copy-sync-code">📋 Скопировать код</button></div>';
+      h += '<div class="modal-actions">';
+      h += '<button class="btn-secondary" data-action="sync-now">🔄 Синхронизировать сейчас</button>';
+      h += '<button class="btn-mini danger" data-action="sync-disconnect">Отключить</button>';
+      h += '</div>';
+    } else {
+      h += '<div class="field"><label>GitHub-токен (только право «gist»)</label>';
+      h += '<input type="password" id="sync-token" placeholder="ghp_..." value="">';
+      h += '</div>';
+      h += '<div style="font-size:12px;color:var(--text-faint);margin:-8px 0 14px 0;">Получить: <span class="sync-link">github.com/settings/tokens/new</span> → отметить только галку <b>gist</b> → Generate token → скопировать.</div>';
+      h += '<button class="btn-primary" data-action="sync-create" '+(syncBusy?'disabled':'')+'>'+(syncBusy?'Создаю...':'Создать хранилище и включить синхронизацию')+'</button>';
+
+      h += '<div class="sync-divider">или подключиться к существующему</div>';
+      h += '<div class="field"><label>Код синхронизации с другого устройства</label>';
+      h += '<input type="text" id="sync-code" placeholder="gistId::token">';
+      h += '</div>';
+      h += '<button class="btn-secondary" data-action="sync-connect" '+(syncBusy?'disabled':'')+' style="width:100%;">'+(syncBusy?'Подключаю...':'Подключить по коду')+'</button>';
+      if(syncFormError) h += '<div style="color:var(--danger);font-size:12.5px;margin-top:10px;">'+esc(syncFormError)+'</div>';
+    }
+
+    h += '<div class="modal-actions"><button class="btn-secondary" data-action="sync-close" style="width:100%;">Закрыть</button></div>';
+    h += '</div></div>';
+    root.innerHTML = h;
+    root.querySelector(".modal").addEventListener("click", function(e){ e.stopPropagation(); });
+    bindSyncModalEvents(root);
+  }
+
+  function bindSyncModalEvents(root){
+    root.querySelectorAll('[data-action="sync-overlay-close"], [data-action="sync-close"]').forEach(function(el){
+      el.addEventListener("click", closeSyncModal);
+    });
+    var copyBtn = root.querySelector('[data-action="copy-sync-code"]');
+    if(copyBtn) copyBtn.addEventListener("click", function(){
+      var text = syncConfig.gistId+"::"+syncConfig.token;
+      var box = document.getElementById("sync-code-box");
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ copyBtn.textContent="✓ Скопировано"; setTimeout(function(){ copyBtn.textContent="📋 Скопировать код"; },1500); }).catch(function(){ selectBox(box); });
+      } else { selectBox(box); }
+    });
+    function selectBox(box){
+      if(!box) return;
+      var range = document.createRange(); range.selectNodeContents(box);
+      var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    }
+    var nowBtn = root.querySelector('[data-action="sync-now"]');
+    if(nowBtn) nowBtn.addEventListener("click", function(){ pullRemote(function(){ doPush(); render(); }); });
+    var discBtn = root.querySelector('[data-action="sync-disconnect"]');
+    if(discBtn) discBtn.addEventListener("click", function(){
+      if(confirm("Отключить синхронизацию на этом устройстве? Локальные данные останутся.")){
+        syncConfig = { token:"", gistId:"" }; saveSyncConfig(); syncStatus="idle"; renderSyncModal(); refreshSyncIndicator();
+      }
+    });
+    var createBtn = root.querySelector('[data-action="sync-create"]');
+    if(createBtn) createBtn.addEventListener("click", function(){
+      var tokenInp = root.querySelector("#sync-token");
+      var token = tokenInp ? tokenInp.value.trim() : "";
+      if(!token){ syncFormError="Вставь токен."; renderSyncModal(); return; }
+      syncBusy = true; syncFormError=""; renderSyncModal();
+      createNewGist(token, function(err, gistId){
+        syncBusy = false;
+        if(err){ syncFormError="Не удалось создать хранилище. Проверь токен и права «gist»."; renderSyncModal(); return; }
+        syncConfig = { token:token, gistId:gistId }; saveSyncConfig();
+        syncStatus="ok"; renderSyncModal(); refreshSyncIndicator();
+      });
+    });
+    var connectBtn = root.querySelector('[data-action="sync-connect"]');
+    if(connectBtn) connectBtn.addEventListener("click", function(){
+      var codeInp = root.querySelector("#sync-code");
+      var code = codeInp ? codeInp.value.trim() : "";
+      var parts = code.split("::");
+      if(parts.length!==2 || !parts[0] || !parts[1]){ syncFormError="Неверный формат кода. Должно быть gistId::token."; renderSyncModal(); return; }
+      syncBusy = true; syncFormError=""; renderSyncModal();
+      syncConfig = { gistId:parts[0], token:parts[1] };
+      pullRemote(function(ok){
+        syncBusy = false;
+        if(!ok){ syncFormError="Не удалось подключиться. Проверь код и интернет."; syncConfig={token:"",gistId:""}; renderSyncModal(); return; }
+        saveSyncConfig(); renderSyncModal(); refreshSyncIndicator(); render();
+      });
+    });
+  }
+
+  // ---------- helpers ----------
+  function tagClass(tag){
+    if(tag==="Бой") return "combat";
+    if(tag==="Социалка") return "social";
+    return "base";
+  }
+  function matchesTab(item){
+    if(state.activeTab==="full") return true;
+    if(state.activeTab==="combat") return item.tags.indexOf("Бой")!==-1 || item.tags.indexOf("База")!==-1;
+    if(state.activeTab==="social") return item.tags.indexOf("Социалка")!==-1 || item.tags.indexOf("База")!==-1;
+    return true;
+  }
+  function levelLabel(lvl){ return lvl===0 ? "З" : String(lvl); }
+  function esc(s){
+    if(s==null) return "";
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function trackedItems(){ return state.items.filter(function(it){ return it.tracked; }); }
+
+  // ---------- render ----------
+  function render(){
+    var html = "";
+    html += renderHeader();
+    html += '<div class="content">';
+    CAT_ORDER.forEach(function(cat){ html += renderCategory(cat); });
+    html += "</div>";
+    document.getElementById("app").innerHTML = html;
+    bindEvents();
+  }
+
+  function renderHeader(){
+    var h = "";
+    h += '<div class="header">';
+    h += '<div class="header-top">';
+    h += '<div class="title-block"><h1>Гримуар</h1><div class="subtitle">Волшебник · Эвокер · 10 уровень</div></div>';
+    h += '<button class="btn-sync'+syncBtnClass()+'" data-action="open-sync" title="Синхронизация между устройствами">'+syncBtnIcon()+'</button>';
+    h += '<button class="btn-rest" data-action="long-rest">🌙 Долгий отдых</button>';
+    h += '</div>';
+
+    h += '<div class="tracker">';
+    h += '<div class="tracker-label">Ячейки заклинаний</div>';
+    h += '<div class="slots-row">';
+    for(var lvl=1; lvl<=9; lvl++){
+      var s = state.slots[lvl];
+      var emptyCls = s.max===0 ? " empty-lvl" : "";
+      h += '<div class="slot-col'+emptyCls+'">';
+      h += '<div class="slot-lvl-num">'+lvl+'</div>';
+      h += '<div class="slot-dots">';
+      if(s.max===0){
+        h += '<div class="slot-dot"></div>';
+      } else {
+        for(var i=0;i<s.max;i++){
+          h += '<div class="slot-dot'+(s.avail[i]?' filled':'')+'" data-action="toggle-slot" data-lvl="'+lvl+'" data-idx="'+i+'"></div>';
+        }
+      }
+      h += '</div></div>';
+    }
+    h += '</div>';
+
+    var tr = trackedItems();
+    if(tr.length){
+      h += '<div class="counters-row">';
+      tr.forEach(function(it){
+        h += '<div class="counter-chip">';
+        h += '<div class="cc-name">'+esc(it.name)+'</div>';
+        h += '<div class="cc-dots">';
+        it.charges.forEach(function(c, idx){
+          h += '<div class="cc-dot'+(c?' filled':'')+'" data-action="toggle-charge" data-id="'+it.id+'" data-idx="'+idx+'"></div>';
+        });
+        h += '</div></div>';
+      });
+      h += '</div>';
+    }
+    h += '</div>'; // tracker
+
+    h += '<div class="tabs">';
+    h += tabBtn("combat","⚔️ Боевой режим");
+    h += tabBtn("social","🗣️ Социальный режим");
+    h += tabBtn("full","🎒 Полный лист");
+    h += '</div>';
+
+    h += '</div>'; // header
+    return h;
+  }
+  function tabBtn(key,label){
+    return '<button class="tab-btn'+(state.activeTab===key?' active':'')+'" data-action="set-tab" data-tab="'+key+'">'+label+'</button>';
+  }
+
+  function renderCategory(cat){
+    var meta = CAT_META[cat];
+    var items = state.items.filter(function(it){ return it.category===cat && matchesTab(it); });
+    var open = !!state.openCats[cat];
+    var h = '<div class="category">';
+    h += '<div class="category-head" data-action="toggle-cat" data-cat="'+cat+'">';
+    h += '<span class="cat-icon">'+meta.icon+'</span>';
+    h += '<span class="cat-title">'+meta.title+'</span>';
+    h += '<span class="cat-count">'+items.length+'</span>';
+    h += '<button class="btn-add" data-action="add-item" data-cat="'+cat+'">+ Добавить</button>';
+    h += '<span class="chevron'+(open?' open':'')+'">▶</span>';
+    h += '</div>';
+    h += '<div class="category-body'+(open?'':' closed')+'">';
+    if(!items.length){
+      h += '<div class="empty-note">Ничего не найдено в этом режиме.</div>';
+    } else {
+      items.forEach(function(it){ h += renderItem(it); });
+    }
+    h += '</div></div>';
+    return h;
+  }
+
+  function renderItem(it){
+    var expanded = !!state.expanded[it.id];
+    var h = '<div class="item">';
+    h += '<div class="item-row" data-action="toggle-item" data-id="'+it.id+'">';
+    if(it.category==="spell"){
+      h += '<div class="lvl-badge">'+levelLabel(it.level)+'</div>';
+    } else {
+      h += '<div class="lvl-badge" style="opacity:.55;font-size:14px;">'+ (it.category==="ability"?"⚡":it.category==="item"?"🎒":"🧬") +'</div>';
+    }
+    h += '<div class="item-main">';
+    h += '<div class="item-name serif">'+esc(it.name)+'</div>';
+    if(it.category==="spell"){
+      h += '<div class="item-quick">'+esc(it.castTime)+' · '+esc(it.range)+'</div>';
+    } else if(it.category==="item" && it.tracked){
+      h += '<div class="item-quick">'+it.charges.filter(Boolean).length+' / '+it.maxCharges+' зарядов'+(it.note?(' · '+esc(it.note)):'')+'</div>';
+    } else {
+      h += '<div class="item-quick">'+ (it.tracked ? (it.charges.filter(Boolean).length+' / '+it.maxCharges) : 'Пассивно') +'</div>';
+    }
+    h += '</div>';
+    h += '<div class="item-tags">';
+    it.tags.forEach(function(t){ h += '<span class="tag-dot t-'+tagClass(t)+'" title="'+t+'"></span>'; });
+    h += '</div>';
+    if(it.tracked && it.category==="item"){
+      h += '<div class="mini-charges">';
+      it.charges.forEach(function(c, idx){
+        h += '<div class="mini-charge'+(c?' filled':'')+'" data-action="toggle-charge" data-id="'+it.id+'" data-idx="'+idx+'"></div>';
+      });
+      h += '</div>';
+    }
+    h += '<div class="item-chevron'+(expanded?' open':'')+'">▶</div>';
+    h += '</div>'; // item-row
+
+    if(expanded){
+      h += '<div class="item-detail">';
+      if(it.category==="spell"){
+        h += '<div class="detail-meta">';
+        h += '<div><b>Круг:</b> '+ (it.level===0?"Заговор":it.level+" круг") +'</div>';
+        h += '<div><b>Школа:</b> '+esc(it.school)+'</div>';
+        h += '<div><b>Компоненты:</b> '+esc(it.components)+'</div>';
+        h += '<div><b>Длительность:</b> '+esc(it.duration)+'</div>';
+        h += '</div>';
+      }
+      if(it.note){ h += '<div class="detail-meta"><div><b>Заметка:</b> '+esc(it.note)+'</div></div>'; }
+      h += '<div class="detail-desc">'+esc(it.desc)+'</div>';
+      h += '<div class="detail-actions">';
+      h += '<button class="btn-mini" data-action="edit-item" data-id="'+it.id+'">✎ Редактировать</button>';
+      h += '<button class="btn-mini danger" data-action="delete-item" data-id="'+it.id+'">🗑 Удалить</button>';
+      h += '</div>';
+      h += '</div>';
+    }
+    h += '</div>'; // item
+    return h;
+  }
+
+  // ---------- modal / form ----------
+  var formState = null; // { editingId, category, name, tags:[], level, castTime, range, duration, school, components, tracked, maxCharges, note, desc }
+
+  function blankForm(cat){
+    return { editingId:null, category:cat||"spell", name:"", tags:["База"],
+      level:1, castTime:"1 действие", range:"9 м", duration:"Мгновенно", school:"Воплощение", components:"В, С",
+      tracked:false, maxCharges:1, note:"", desc:"" };
+  }
+  function formFromItem(it){
+    return { editingId: it.id, category:it.category, name:it.name, tags:it.tags.slice(),
+      level: it.level!=null?it.level:1, castTime:it.castTime||"1 действие", range:it.range||"9 м",
+      duration:it.duration||"Мгновенно", school:it.school||"Воплощение", components:it.components||"В, С",
+      tracked: !!it.tracked, maxCharges: it.maxCharges||1, note: it.note||"", desc: it.desc||"" };
+  }
+
+  function openForm(cat, editItem){
+    formState = editItem ? formFromItem(editItem) : blankForm(cat);
+    renderModal();
+  }
+  function closeForm(){
+    formState = null;
+    var ex = document.getElementById("modal-root");
+    if(ex) ex.remove();
+  }
+
+  function renderModal(){
+    var root = document.getElementById("modal-root");
+    if(!root){ root = document.createElement("div"); root.id="modal-root"; document.body.appendChild(root); }
+    var f = formState;
+    var isSpell = f.category==="spell";
+    var isItemLike = f.category==="item" || f.category==="ability" || f.category==="feature";
+
+    var h = '<div class="overlay" data-action="overlay-close">';
+    h += '<div class="modal" data-stop="1">';
+    h += '<h2>'+(f.editingId?'Редактировать элемент':'Новый элемент')+'</h2>';
+
+    h += '<div class="field"><label>Категория</label><select id="f-category">';
+    CAT_ORDER.forEach(function(c){ h += '<option value="'+c+'"'+(f.category===c?' selected':'')+'>'+CAT_META[c].icon+' '+CAT_META[c].title+'</option>'; });
+    h += '</select></div>';
+
+    h += '<div class="field"><label>Название</label><input type="text" id="f-name" value="'+esc(f.name)+'" placeholder="Например, Ледяной луч"></div>';
+
+    h += '<div class="field"><label>Теги (режимы отображения)</label><div class="chip-select">';
+    ["База","Бой","Социалка"].forEach(function(t){
+      var sel = f.tags.indexOf(t)!==-1;
+      var cls = t==="База"?"sel-base":t==="Бой"?"sel-combat":"sel-social";
+      h += '<button type="button" class="chip-opt'+(sel?(' '+cls):'')+'" data-action="toggle-tag" data-tag="'+t+'">'+t+'</button>';
+    });
+    h += '</div></div>';
+
+    if(isSpell){
+      h += '<div class="row3">';
+      h += '<div class="field"><label>Круг</label><select id="f-level">';
+      for(var l=0;l<=9;l++){ h += '<option value="'+l+'"'+(f.level===l?' selected':'')+'>'+(l===0?"Заговор":l)+'</option>'; }
+      h += '</select></div>';
+      h += '<div class="field"><label>Школа</label><input type="text" id="f-school" value="'+esc(f.school)+'"></div>';
+      h += '<div class="field"><label>Компоненты</label><input type="text" id="f-components" value="'+esc(f.components)+'"></div>';
+      h += '</div>';
+      h += '<div class="row3">';
+      h += '<div class="field"><label>Время накладывания</label><input type="text" id="f-casttime" value="'+esc(f.castTime)+'"></div>';
+      h += '<div class="field"><label>Дистанция</label><input type="text" id="f-range" value="'+esc(f.range)+'"></div>';
+      h += '<div class="field"><label>Длительность</label><input type="text" id="f-duration" value="'+esc(f.duration)+'"></div>';
+      h += '</div>';
+    }
+
+    if(isItemLike){
+      h += '<div class="track-toggle"><div class="switch'+(f.tracked?' on':'')+'" data-action="toggle-tracked"><div class="knob"></div></div><span style="font-size:13px;color:var(--text-dim);">Отслеживать как ресурс (счётчик зарядов сверху)</span></div>';
+      if(f.tracked){
+        h += '<div class="row2">';
+        h += '<div class="field"><label>Макс. зарядов</label><input type="number" min="1" max="20" id="f-maxcharges" value="'+f.maxCharges+'"></div>';
+        h += '<div class="field"><label>Заметка (необязательно)</label><input type="text" id="f-note" value="'+esc(f.note)+'" placeholder="Например, что сейчас загружено"></div>';
+        h += '</div>';
+      }
+    }
+
+    h += '<div class="field"><label>Полное описание</label><textarea id="f-desc" placeholder="Полный текст механики...">'+esc(f.desc)+'</textarea></div>';
+
+    h += '<div class="modal-actions">';
+    h += '<button class="btn-secondary" data-action="cancel-form">Отмена</button>';
+    h += '<button class="btn-primary" data-action="save-form">Сохранить</button>';
+    h += '</div>';
+
+    h += '</div></div>';
+    root.innerHTML = h;
+
+    root.querySelector(".modal").addEventListener("click", function(e){ e.stopPropagation(); });
+    bindModalEvents(root);
+  }
+
+  function bindModalEvents(root){
+    root.querySelectorAll('[data-action="overlay-close"]').forEach(function(el){
+      el.addEventListener("click", function(){ closeForm(); });
+    });
+    var catSel = root.querySelector("#f-category");
+    if(catSel) catSel.addEventListener("change", function(){ formState.category = catSel.value; renderModal(); });
+    var nameInp = root.querySelector("#f-name");
+    if(nameInp) nameInp.addEventListener("input", function(){ formState.name = nameInp.value; });
+    root.querySelectorAll('[data-action="toggle-tag"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        var t = el.getAttribute("data-tag");
+        var idx = formState.tags.indexOf(t);
+        if(idx===-1) formState.tags.push(t); else formState.tags.splice(idx,1);
+        renderModal();
+      });
+    });
+    ["f-level","f-school","f-components","f-casttime","f-range","f-duration","f-maxcharges","f-note","f-desc"].forEach(function(id){
+      var el = root.querySelector("#"+id);
+      if(!el) return;
+      var key = ({ "f-level":"level","f-school":"school","f-components":"components","f-casttime":"castTime",
+        "f-range":"range","f-duration":"duration","f-maxcharges":"maxCharges","f-note":"note","f-desc":"desc" })[id];
+      el.addEventListener("input", function(){
+        formState[key] = (id==="f-level") ? parseInt(el.value,10) : (id==="f-maxcharges" ? Math.max(1, parseInt(el.value||"1",10)) : el.value);
+      });
+    });
+    var trackToggle = root.querySelector('[data-action="toggle-tracked"]');
+    if(trackToggle) trackToggle.addEventListener("click", function(){ formState.tracked = !formState.tracked; renderModal(); });
+    var cancelBtn = root.querySelector('[data-action="cancel-form"]');
+    if(cancelBtn) cancelBtn.addEventListener("click", function(){ closeForm(); });
+    var saveBtn = root.querySelector('[data-action="save-form"]');
+    if(saveBtn) saveBtn.addEventListener("click", function(){ submitForm(); });
+  }
+
+  function submitForm(){
+    var f = formState;
+    if(!f.name || !f.name.trim()){ alert("Введите название элемента."); return; }
+    var item;
+    if(f.editingId){
+      item = state.items.find(function(it){ return it.id===f.editingId; });
+    } else {
+      item = { id: "u-"+Date.now()+"-"+Math.floor(Math.random()*10000) };
+      state.items.push(item);
+    }
+    item.category = f.category;
+    item.name = f.name.trim();
+    item.tags = f.tags.length ? f.tags.slice() : ["База"];
+    item.desc = f.desc || "";
+
+    if(f.category==="spell"){
+      item.level = f.level!=null ? f.level : 1;
+      item.school = f.school || "";
+      item.components = f.components || "";
+      item.castTime = f.castTime || "";
+      item.range = f.range || "";
+      item.duration = f.duration || "";
+      item.tracked = false;
+      delete item.charges; delete item.maxCharges; delete item.note;
+    } else {
+      delete item.level; delete item.school; delete item.components; delete item.castTime; delete item.range; delete item.duration;
+      item.tracked = !!f.tracked;
+      if(item.tracked){
+        var max = f.maxCharges || 1;
+        var prevFilled = (item.charges||[]).filter(Boolean).length;
+        var newFilled = f.editingId ? Math.min(prevFilled || max, max) : max;
+        item.maxCharges = max;
+        item.charges = [];
+        for(var i=0;i<max;i++){ item.charges.push(i < newFilled); }
+        item.note = f.note || "";
+      } else {
+        delete item.maxCharges; delete item.charges; delete item.note;
+      }
+    }
+    save();
+    closeForm();
+    render();
+  }
+
+  // ---------- events ----------
+  function bindEvents(){
+    document.querySelectorAll('[data-action="open-sync"]').forEach(function(el){
+      el.addEventListener("click", openSyncModal);
+    });
+    document.querySelectorAll('[data-action="long-rest"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        Object.keys(state.slots).forEach(function(lvl){
+          var s = state.slots[lvl];
+          for(var i=0;i<s.max;i++) s.avail[i]=true;
+        });
+        state.items.forEach(function(it){
+          if(it.tracked){ for(var i=0;i<it.maxCharges;i++) it.charges[i]=true; }
+        });
+        save(); render();
+      });
+    });
+    document.querySelectorAll('[data-action="toggle-slot"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        var lvl = el.getAttribute("data-lvl"); var idx = parseInt(el.getAttribute("data-idx"),10);
+        state.slots[lvl].avail[idx] = !state.slots[lvl].avail[idx];
+        save(); render();
+      });
+    });
+    document.querySelectorAll('[data-action="toggle-charge"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var id = el.getAttribute("data-id"); var idx = parseInt(el.getAttribute("data-idx"),10);
+        var it = state.items.find(function(i){ return i.id===id; });
+        if(it){ it.charges[idx] = !it.charges[idx]; save(); render(); }
+      });
+    });
+    document.querySelectorAll('[data-action="set-tab"]').forEach(function(el){
+      el.addEventListener("click", function(){ state.activeTab = el.getAttribute("data-tab"); save(); render(); });
+    });
+    document.querySelectorAll('[data-action="toggle-cat"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        if(e.target.closest('[data-action="add-item"]')) return;
+        var cat = el.getAttribute("data-cat");
+        state.openCats[cat] = !state.openCats[cat];
+        save(); render();
+      });
+    });
+    document.querySelectorAll('[data-action="add-item"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        openForm(el.getAttribute("data-cat"), null);
+      });
+    });
+    document.querySelectorAll('[data-action="toggle-item"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        if(e.target.closest('[data-action="toggle-charge"]')) return;
+        var id = el.getAttribute("data-id");
+        state.expanded[id] = !state.expanded[id];
+        save(); render();
+      });
+    });
+    document.querySelectorAll('[data-action="edit-item"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var id = el.getAttribute("data-id");
+        var it = state.items.find(function(i){ return i.id===id; });
+        if(it) openForm(it.category, it);
+      });
+    });
+    document.querySelectorAll('[data-action="delete-item"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var id = el.getAttribute("data-id");
+        if(confirm("Удалить этот элемент безвозвратно?")){
+          state.items = state.items.filter(function(i){ return i.id!==id; });
+          delete state.expanded[id];
+          save(); render();
+        }
+      });
+    });
+  }
+
+  render();
+  if(hasSync()){ pullRemote(function(){ render(); }); }
+})();
+</script>
+</body>
+</html>
