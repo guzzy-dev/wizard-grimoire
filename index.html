@@ -96,7 +96,8 @@ input,select,textarea{ font-family:inherit; }
 }
 .slot-col{ display:flex; flex-direction:column; align-items:center; gap:6px; min-width:34px; flex:0 0 auto; }
 .slot-col.empty-lvl{ opacity:.28; }
-.slot-lvl-num{ font-size:11px; color:var(--text-dim); font-weight:700; }
+.slot-lvl-num{ font-size:11px; color:var(--text-dim); font-weight:700; cursor:pointer; border-bottom:1px dotted var(--text-faint); padding-bottom:1px; }
+.slot-lvl-num:active{ color:var(--accent); }
 .slot-dots{ display:flex; flex-direction:column-reverse; gap:4px; }
 .slot-dot{
   width:16px; height:16px; border-radius:50%;
@@ -647,7 +648,7 @@ input,select,textarea{ font-family:inherit; }
       var s = state.slots[lvl];
       var emptyCls = s.max===0 ? " empty-lvl" : "";
       h += '<div class="slot-col'+emptyCls+'">';
-      h += '<div class="slot-lvl-num">'+lvl+'</div>';
+      h += '<div class="slot-lvl-num" data-action="edit-slot-max" data-lvl="'+lvl+'" title="Изменить макс. количество ячеек">'+lvl+'</div>';
       h += '<div class="slot-dots">';
       if(s.max===0){
         h += '<div class="slot-dot"></div>';
@@ -945,6 +946,23 @@ input,select,textarea{ font-family:inherit; }
         state.items.forEach(function(it){
           if(it.tracked){ for(var i=0;i<it.maxCharges;i++) it.charges[i]=true; }
         });
+        save(); render();
+      });
+    });
+    document.querySelectorAll('[data-action="edit-slot-max"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var lvl = el.getAttribute("data-lvl");
+        var cur = state.slots[lvl];
+        var input = prompt("Максимум ячеек "+lvl+" круга (сейчас "+cur.max+"):", cur.max);
+        if(input===null) return;
+        var n = parseInt(input,10);
+        if(isNaN(n) || n<0) return;
+        n = Math.min(n, 20);
+        var oldFilled = cur.avail.filter(Boolean).length;
+        var newAvail = [];
+        for(var i=0;i<n;i++){ newAvail.push(i < Math.min(oldFilled, n)); }
+        state.slots[lvl] = { max:n, avail:newAvail };
         save(); render();
       });
     });
