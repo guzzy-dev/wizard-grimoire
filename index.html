@@ -271,6 +271,8 @@ input,select,textarea{ font-family:inherit; }
   color:var(--gold); display:flex; align-items:center; gap:8px;
 }
 .level-group-count{ color:var(--text-faint); font-weight:600; font-size:10px; background:var(--bg-card); border-radius:20px; padding:1px 7px; text-transform:none; letter-spacing:0; }
+.ritual-group .level-group-header{ color:var(--accent); }
+.ritual-badge{ font-size:9.5px; color:var(--accent); margin-left:4px; }
 
 /* item row */
 .item{ border-bottom:1px solid var(--border-soft); }
@@ -1217,14 +1219,23 @@ input,select,textarea{ font-family:inherit; }
   }
 
   function renderSpellsGrouped(items){
+    var ritualItems = items.filter(function(it){ return !!it.ritual; });
+    var rest = items.filter(function(it){ return !it.ritual; });
+    var h = "";
+    if(ritualItems.length){
+      ritualItems.sort(function(a,b){ return (a.level||0)-(b.level||0); });
+      h += '<div class="level-group ritual-group">';
+      h += '<div class="level-group-header">🕯️ Ритуалы <span class="level-group-count">'+ritualItems.length+'</span></div>';
+      ritualItems.forEach(function(it){ h += renderItem(it); });
+      h += '</div>';
+    }
     var groups = {};
-    items.forEach(function(it){
+    rest.forEach(function(it){
       var lvl = (it.level!=null) ? it.level : 0;
       if(!groups[lvl]) groups[lvl] = [];
       groups[lvl].push(it);
     });
     var levels = Object.keys(groups).map(Number).sort(function(a,b){ return a-b; });
-    var h = "";
     levels.forEach(function(lvl){
       h += '<div class="level-group">';
       h += '<div class="level-group-header">'+(lvl===0?"Заговоры":lvl+" круг")+' <span class="level-group-count">'+groups[lvl].length+'</span></div>';
@@ -1246,7 +1257,7 @@ input,select,textarea{ font-family:inherit; }
     h += '<div class="item-main">';
     h += '<div class="item-name serif">'+esc(it.name)+'</div>';
     if(it.category==="spell"){
-      h += '<div class="item-quick">'+esc(it.castTime)+' · '+esc(it.range)+'</div>';
+      h += '<div class="item-quick">'+esc(it.castTime)+' · '+esc(it.range)+(it.ritual?' <span class="ritual-badge">🕯️ ритуал</span>':'')+'</div>';
     } else if(it.category==="item" && it.tracked){
       h += '<div class="item-quick">'+it.charges.filter(Boolean).length+' / '+it.maxCharges+' зарядов'+(it.note?(' · '+esc(it.note)):'')+'</div>';
     } else {
@@ -1295,14 +1306,14 @@ input,select,textarea{ font-family:inherit; }
     return { editingId:null, category:cat||"spell", name:"", tags:["База"],
       level:1, castTime:"1 действие", range:"9 м", duration:"Мгновенно", school:"Воплощение", components:"В, С",
       tracked:false, maxCharges:1, note:"", desc:"",
-      itemType:"misc", qty:1, equipped:false };
+      itemType:"misc", qty:1, equipped:false, ritual:false };
   }
   function formFromItem(it){
     return { editingId: it.id, category:it.category, name:it.name, tags:it.tags.slice(),
       level: it.level!=null?it.level:1, castTime:it.castTime||"1 действие", range:it.range||"9 м",
       duration:it.duration||"Мгновенно", school:it.school||"Воплощение", components:it.components||"В, С",
       tracked: !!it.tracked, maxCharges: it.maxCharges||1, note: it.note||"", desc: it.desc||"",
-      itemType: it.itemType||"misc", qty: it.qty||1, equipped: !!it.equipped };
+      itemType: it.itemType||"misc", qty: it.qty||1, equipped: !!it.equipped, ritual: !!it.ritual };
   }
 
   function openForm(cat, editItem){
@@ -1354,6 +1365,7 @@ input,select,textarea{ font-family:inherit; }
       h += '<div class="field"><label>Дистанция</label><input type="text" id="f-range" value="'+esc(f.range)+'"></div>';
       h += '<div class="field"><label>Длительность</label><input type="text" id="f-duration" value="'+esc(f.duration)+'"></div>';
       h += '</div>';
+      h += '<div class="track-toggle"><div class="switch'+(f.ritual?' on':'')+'" data-action="toggle-ritual"><div class="knob"></div></div><span style="font-size:13px;color:var(--text-dim);">Можно наложить ритуалом</span></div>';
     }
 
     if(isInventoryItem){
@@ -1430,6 +1442,8 @@ input,select,textarea{ font-family:inherit; }
     });
     var equipToggle = root.querySelector('[data-action="toggle-equipped"]');
     if(equipToggle) equipToggle.addEventListener("click", function(){ formState.equipped = !formState.equipped; renderModal(); });
+    var ritualToggle = root.querySelector('[data-action="toggle-ritual"]');
+    if(ritualToggle) ritualToggle.addEventListener("click", function(){ formState.ritual = !formState.ritual; renderModal(); });
     var cancelBtn = root.querySelector('[data-action="cancel-form"]');
     if(cancelBtn) cancelBtn.addEventListener("click", function(){ closeForm(); });
     var saveBtn = root.querySelector('[data-action="save-form"]');
@@ -1458,10 +1472,11 @@ input,select,textarea{ font-family:inherit; }
       item.castTime = f.castTime || "";
       item.range = f.range || "";
       item.duration = f.duration || "";
+      item.ritual = !!f.ritual;
       item.tracked = false;
       delete item.charges; delete item.maxCharges; delete item.note;
     } else {
-      delete item.level; delete item.school; delete item.components; delete item.castTime; delete item.range; delete item.duration;
+      delete item.level; delete item.school; delete item.components; delete item.castTime; delete item.range; delete item.duration; delete item.ritual;
       item.tracked = !!f.tracked;
       if(item.tracked){
         var max = f.maxCharges || 1;
