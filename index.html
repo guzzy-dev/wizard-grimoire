@@ -508,6 +508,7 @@ input,select,textarea{ font-family:inherit; }
       openCats:{spell:true, ability:true, item:true, feature:true},
       expanded:{},
       gold:{cash:0, bank:0, stash:0},
+      ringStoring:{text:"", level:1},
       updatedAt: 0
     });
   }
@@ -801,6 +802,7 @@ input,select,textarea{ font-family:inherit; }
 
   function normalizeState(s){
     if(!s.gold) s.gold = {cash:0, bank:0, stash:0};
+    if(!s.ringStoring) s.ringStoring = {text:"", level:1};
     var d = defaultSheet();
     if(!s.sheet) s.sheet = d;
     else{
@@ -952,8 +954,19 @@ input,select,textarea{ font-family:inherit; }
   function filterChip(key,label){
     return '<button class="filter-chip'+((state.spellFilter||"all")===key?' active':'')+'" data-action="set-spell-filter" data-filter="'+key+'">'+label+'</button>';
   }
+  function renderRingStoringPanel(){
+    var rs = state.ringStoring || {text:"", level:1};
+    var h = '<div class="sheet-card" style="margin-bottom:12px;">';
+    h += '<div class="sheet-card-title">💍 Кольцо хранения заклинаний</div>';
+    h += '<div class="char-info-grid">';
+    h += '<div class="char-info-field"><label>Что хранится</label><input type="text" data-ring-field="text" value="'+esc(rs.text)+'" placeholder="Например, Стена огня"></div>';
+    h += '<div class="char-info-field"><label>Ячейка (круг)</label><input type="number" min="1" max="5" data-ring-field="level" value="'+(rs.level||1)+'"></div>';
+    h += '</div></div>';
+    return h;
+  }
   function renderSpellsTab(){
-    var h = '<div class="filter-chips">';
+    var h = renderRingStoringPanel();
+    h += '<div class="filter-chips">';
     h += filterChip("all","Все");
     h += filterChip("combat","⚔️ Бой");
     h += filterChip("social","🗣️ Социалка");
@@ -1541,6 +1554,21 @@ input,select,textarea{ font-family:inherit; }
     });
     document.querySelectorAll('[data-action="set-spell-filter"]').forEach(function(el){
       el.addEventListener("click", function(){ state.spellFilter = el.getAttribute("data-filter"); save(); render(); });
+    });
+    document.querySelectorAll('[data-ring-field]').forEach(function(el){
+      el.addEventListener("input", function(){
+        if(!state.ringStoring) state.ringStoring = {text:"", level:1};
+        var key = el.getAttribute("data-ring-field");
+        if(key==="level"){
+          var v = parseInt(el.value,10);
+          if(isNaN(v)) v = 1;
+          v = Math.max(1, Math.min(5, v));
+          state.ringStoring.level = v;
+        } else {
+          state.ringStoring.text = el.value;
+        }
+        save();
+      });
     });
     document.querySelectorAll('[data-gold-key]').forEach(function(el){
       el.addEventListener("input", function(){
