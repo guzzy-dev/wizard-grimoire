@@ -79,6 +79,36 @@ input,select,textarea{ font-family:inherit; }
 }
 .btn-rest:active{ transform:scale(.96); box-shadow:0 2px 6px rgba(149,132,247,.2); }
 
+/* todo panel */
+.todo-panel{
+  background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius);
+  padding:12px 14px; margin-bottom:12px;
+}
+.todo-head{ display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; }
+.todo-head .todo-icon{ font-size:15px; }
+.todo-head .todo-title{ font-weight:700; font-size:13.5px; flex:1; }
+.todo-head .todo-count{ font-size:11px; color:var(--text-faint); background:var(--bg-card); border-radius:20px; padding:2px 8px; }
+.todo-body{ margin-top:10px; }
+.todo-body.closed{ display:none; }
+.todo-list{ display:flex; flex-direction:column; gap:2px; margin-bottom:8px; }
+.todo-item{ display:flex; align-items:center; gap:10px; padding:7px 2px; border-bottom:1px solid var(--border-soft); }
+.todo-item:last-child{ border-bottom:none; }
+.todo-check{ width:18px; height:18px; border-radius:6px; border:1.5px solid var(--accent-dim); background:transparent; flex:0 0 auto; }
+.todo-check.on{ background:var(--accent); border-color:var(--accent); }
+.todo-text{ flex:1; font-size:13.5px; color:var(--text); }
+.todo-item.done .todo-text{ color:var(--text-faint); text-decoration:line-through; }
+.todo-del{ color:var(--text-faint); font-size:13px; flex:0 0 auto; background:none; border:none; padding:2px 4px; }
+.todo-empty{ color:var(--text-faint); font-size:12.5px; font-style:italic; padding:4px 2px 8px 2px; }
+.todo-add-row{ display:flex; gap:8px; }
+.todo-add-input{
+  flex:1; background:var(--bg-card); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:9px 12px; font-size:13.5px;
+}
+.todo-add-btn{
+  border:1px solid var(--border); background:var(--bg-card); color:var(--accent);
+  border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600; white-space:nowrap;
+}
+
 /* resource panel */
 .tracker{
   background:var(--bg-panel);
@@ -509,6 +539,8 @@ input,select,textarea{ font-family:inherit; }
       expanded:{},
       gold:{cash:0, bank:0, stash:0},
       ringStoring:{text:"", level:1},
+      todos:[],
+      todosOpen:true,
       updatedAt: 0
     });
   }
@@ -803,6 +835,8 @@ input,select,textarea{ font-family:inherit; }
   function normalizeState(s){
     if(!s.gold) s.gold = {cash:0, bank:0, stash:0};
     if(!s.ringStoring) s.ringStoring = {text:"", level:1};
+    if(!s.todos) s.todos = [];
+    if(s.todosOpen==null) s.todosOpen = true;
     var d = defaultSheet();
     if(!s.sheet) s.sheet = d;
     else{
@@ -1065,6 +1099,39 @@ input,select,textarea{ font-family:inherit; }
     return h;
   }
 
+  function renderTodoPanel(){
+    var todos = state.todos || [];
+    var open = state.todosOpen!==false;
+    var doneCount = todos.filter(function(t){ return t.done; }).length;
+    var h = '<div class="todo-panel">';
+    h += '<div class="todo-head" data-action="toggle-todo-panel">';
+    h += '<span class="todo-icon">📝</span><span class="todo-title">Задачи</span>';
+    h += '<span class="todo-count">'+doneCount+' / '+todos.length+'</span>';
+    h += '<span class="chevron'+(open?' open':'')+'">▶</span>';
+    h += '</div>';
+    h += '<div class="todo-body'+(open?'':' closed')+'">';
+    if(todos.length){
+      h += '<div class="todo-list">';
+      todos.forEach(function(t){
+        h += '<div class="todo-item'+(t.done?' done':'')+'">';
+        h += '<div class="todo-check'+(t.done?' on':'')+'" data-action="toggle-todo" data-id="'+t.id+'"></div>';
+        h += '<div class="todo-text">'+esc(t.text)+'</div>';
+        h += '<button class="todo-del" data-action="delete-todo" data-id="'+t.id+'">✕</button>';
+        h += '</div>';
+      });
+      h += '</div>';
+    } else {
+      h += '<div class="todo-empty">Пока пусто — добавь первую задачу.</div>';
+    }
+    h += '<div class="todo-add-row">';
+    h += '<input type="text" class="todo-add-input" id="todo-new-input" placeholder="Новая задача...">';
+    h += '<button class="todo-add-btn" data-action="add-todo">+ Добавить</button>';
+    h += '</div>';
+    h += '</div>'; // todo-body
+    h += '</div>'; // todo-panel
+    return h;
+  }
+
   function renderHeader(){
     var h = "";
     h += '<div class="header">';
@@ -1073,6 +1140,8 @@ input,select,textarea{ font-family:inherit; }
     h += '<button class="btn-sync'+syncBtnClass()+'" data-action="open-sync" title="Синхронизация между устройствами">'+syncBtnIcon()+'</button>';
     h += '<button class="btn-rest" data-action="long-rest">🌙 Долгий отдых</button>';
     h += '</div>';
+
+    h += renderTodoPanel();
 
     h += '<div class="tracker">';
     h += '<div class="tracker-label">Ячейки заклинаний</div>';
@@ -1555,6 +1624,37 @@ input,select,textarea{ font-family:inherit; }
     document.querySelectorAll('[data-action="set-spell-filter"]').forEach(function(el){
       el.addEventListener("click", function(){ state.spellFilter = el.getAttribute("data-filter"); save(); render(); });
     });
+    document.querySelectorAll('[data-action="toggle-todo-panel"]').forEach(function(el){
+      el.addEventListener("click", function(){ state.todosOpen = !(state.todosOpen!==false); save(); render(); });
+    });
+    document.querySelectorAll('[data-action="toggle-todo"]').forEach(function(el){
+      el.addEventListener("click", function(){
+        var id = el.getAttribute("data-id");
+        var t = state.todos.find(function(x){ return x.id===id; });
+        if(t){ t.done = !t.done; save(); render(); }
+      });
+    });
+    document.querySelectorAll('[data-action="delete-todo"]').forEach(function(el){
+      el.addEventListener("click", function(e){
+        e.stopPropagation();
+        var id = el.getAttribute("data-id");
+        state.todos = state.todos.filter(function(x){ return x.id!==id; });
+        save(); render();
+      });
+    });
+    (function(){
+      var addBtn = document.querySelector('[data-action="add-todo"]');
+      var input = document.getElementById("todo-new-input");
+      function doAdd(){
+        if(!input) return;
+        var text = input.value.trim();
+        if(!text) return;
+        state.todos.push({ id:"td-"+Date.now()+"-"+Math.floor(Math.random()*10000), text:text, done:false });
+        save(); render();
+      }
+      if(addBtn) addBtn.addEventListener("click", doAdd);
+      if(input) input.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); doAdd(); } });
+    })();
     document.querySelectorAll('[data-ring-field]').forEach(function(el){
       el.addEventListener("input", function(){
         if(!state.ringStoring) state.ringStoring = {text:"", level:1};
