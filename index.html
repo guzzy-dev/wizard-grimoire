@@ -960,7 +960,7 @@ input,select,textarea{ font-family:inherit; }
     h += '<div class="sheet-card-title">💍 Кольцо хранения заклинаний</div>';
     h += '<div class="char-info-grid">';
     h += '<div class="char-info-field"><label>Что хранится</label><input type="text" data-ring-field="text" value="'+esc(rs.text)+'" placeholder="Например, Стена огня"></div>';
-    h += '<div class="char-info-field"><label>Ячейка (круг)</label><input type="number" min="1" max="5" data-ring-field="level" value="'+(rs.level||1)+'"></div>';
+    h += '<div class="char-info-field"><label>Ячейка (круг)</label><input type="number" min="1" max="9" data-ring-field="level" value="'+(rs.level||1)+'"></div>';
     h += '</div></div>';
     return h;
   }
@@ -1562,7 +1562,7 @@ input,select,textarea{ font-family:inherit; }
         if(key==="level"){
           var v = parseInt(el.value,10);
           if(isNaN(v)) v = 1;
-          v = Math.max(1, Math.min(5, v));
+          v = Math.max(1, Math.min(9, v));
           state.ringStoring.level = v;
         } else {
           state.ringStoring.text = el.value;
