@@ -109,6 +109,14 @@ input,select,textarea{ font-family:inherit; }
   border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600; white-space:nowrap;
 }
 
+/* spells layout */
+.spells-layout{ display:flex; flex-direction:column; gap:0; }
+@media(min-width:720px){
+  .spells-layout{ flex-direction:row; align-items:flex-start; gap:14px; }
+  .spells-sidebar{ flex:0 0 240px; position:sticky; top:10px; }
+  .spells-main{ flex:1; min-width:0; }
+}
+
 /* resource panel */
 .tracker{
   background:var(--bg-panel);
@@ -1000,14 +1008,58 @@ input,select,textarea{ font-family:inherit; }
     h += '</div></div>';
     return h;
   }
-  function renderSpellsTab(){
-    var h = renderRingStoringPanel();
-    h += '<div class="filter-chips">';
-    h += filterChip("all","Все");
-    h += filterChip("combat","⚔️ Бой");
-    h += filterChip("social","🗣️ Социалка");
+  function renderTrackerPanel(){
+    var h = '<div class="tracker">';
+    h += '<div class="tracker-label">Ячейки заклинаний</div>';
+    h += '<div class="slots-row">';
+    for(var lvl=1; lvl<=9; lvl++){
+      var s = state.slots[lvl];
+      var emptyCls = s.max===0 ? " empty-lvl" : "";
+      h += '<div class="slot-col'+emptyCls+'">';
+      h += '<div class="slot-lvl-num" data-action="edit-slot-max" data-lvl="'+lvl+'" title="Изменить макс. количество ячеек">'+lvl+'</div>';
+      h += '<div class="slot-dots">';
+      if(s.max===0){
+        h += '<div class="slot-dot"></div>';
+      } else {
+        for(var i=0;i<s.max;i++){
+          h += '<div class="slot-dot'+(s.avail[i]?' filled':'')+'" data-action="toggle-slot" data-lvl="'+lvl+'" data-idx="'+i+'"></div>';
+        }
+      }
+      h += '</div></div>';
+    }
     h += '</div>';
-    h += renderCategory("spell", matchesSpellFilter);
+
+    var tr = trackedItems();
+    if(tr.length){
+      h += '<div class="counters-row">';
+      tr.forEach(function(it){
+        h += '<div class="counter-chip">';
+        h += '<div class="cc-name">'+esc(it.name)+'</div>';
+        h += '<div class="cc-dots">';
+        it.charges.forEach(function(c, idx){
+          h += '<div class="cc-dot'+(c?' filled':'')+'" data-action="toggle-charge" data-id="'+it.id+'" data-idx="'+idx+'"></div>';
+        });
+        h += '</div></div>';
+      });
+      h += '</div>';
+    }
+    h += '</div>'; // tracker
+    return h;
+  }
+
+  function renderSpellsTab(){
+    var main = renderRingStoringPanel();
+    main += '<div class="filter-chips">';
+    main += filterChip("all","Все");
+    main += filterChip("combat","⚔️ Бой");
+    main += filterChip("social","🗣️ Социалка");
+    main += '</div>';
+    main += renderCategory("spell", matchesSpellFilter);
+
+    var h = '<div class="spells-layout">';
+    h += '<div class="spells-sidebar">'+renderTrackerPanel()+'</div>';
+    h += '<div class="spells-main">'+main+'</div>';
+    h += '</div>';
     return h;
   }
   function renderInventoryTab(){
@@ -1144,42 +1196,6 @@ input,select,textarea{ font-family:inherit; }
     h += '</div>';
 
     h += renderTodoPanel();
-
-    h += '<div class="tracker">';
-    h += '<div class="tracker-label">Ячейки заклинаний</div>';
-    h += '<div class="slots-row">';
-    for(var lvl=1; lvl<=9; lvl++){
-      var s = state.slots[lvl];
-      var emptyCls = s.max===0 ? " empty-lvl" : "";
-      h += '<div class="slot-col'+emptyCls+'">';
-      h += '<div class="slot-lvl-num" data-action="edit-slot-max" data-lvl="'+lvl+'" title="Изменить макс. количество ячеек">'+lvl+'</div>';
-      h += '<div class="slot-dots">';
-      if(s.max===0){
-        h += '<div class="slot-dot"></div>';
-      } else {
-        for(var i=0;i<s.max;i++){
-          h += '<div class="slot-dot'+(s.avail[i]?' filled':'')+'" data-action="toggle-slot" data-lvl="'+lvl+'" data-idx="'+i+'"></div>';
-        }
-      }
-      h += '</div></div>';
-    }
-    h += '</div>';
-
-    var tr = trackedItems();
-    if(tr.length){
-      h += '<div class="counters-row">';
-      tr.forEach(function(it){
-        h += '<div class="counter-chip">';
-        h += '<div class="cc-name">'+esc(it.name)+'</div>';
-        h += '<div class="cc-dots">';
-        it.charges.forEach(function(c, idx){
-          h += '<div class="cc-dot'+(c?' filled':'')+'" data-action="toggle-charge" data-id="'+it.id+'" data-idx="'+idx+'"></div>';
-        });
-        h += '</div></div>';
-      });
-      h += '</div>';
-    }
-    h += '</div>'; // tracker
 
     h += '<div class="tabs">';
     h += tabBtn("sheet","🧙 Чарник");
