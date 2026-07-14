@@ -109,14 +109,6 @@ input,select,textarea{ font-family:inherit; }
   border-radius:8px; padding:9px 14px; font-size:13px; font-weight:600; white-space:nowrap;
 }
 
-/* spells layout */
-.spells-layout{ display:flex; flex-direction:column; gap:0; }
-@media(min-width:720px){
-  .spells-layout{ flex-direction:row; align-items:flex-start; gap:14px; }
-  .spells-sidebar{ flex:0 0 240px; position:sticky; top:10px; }
-  .spells-main{ flex:1; min-width:0; }
-}
-
 /* resource panel */
 .tracker{
   background:var(--bg-panel);
@@ -124,6 +116,20 @@ input,select,textarea{ font-family:inherit; }
   border-radius:var(--radius);
   padding:14px 16px 16px 16px;
   margin-bottom:12px;
+}
+.tracker.tracker-fixed{ display:none; }
+@media(min-width:1500px){
+  .tracker.tracker-fixed{
+    display:block;
+    position:fixed;
+    top:20px;
+    left:calc(50% - 450px - 296px);
+    width:280px;
+    max-height:calc(100vh - 40px);
+    overflow-y:auto;
+    z-index:20;
+  }
+  .tracker.tracker-inline{ display:none; }
 }
 .tracker-label{
   font-size:10.5px; text-transform:uppercase; letter-spacing:.9px;
@@ -1008,9 +1014,8 @@ input,select,textarea{ font-family:inherit; }
     h += '</div></div>';
     return h;
   }
-  function renderTrackerPanel(){
-    var h = '<div class="tracker">';
-    h += '<div class="tracker-label">Ячейки заклинаний</div>';
+  function renderTrackerInner(){
+    var h = '<div class="tracker-label">Ячейки заклинаний</div>';
     h += '<div class="slots-row">';
     for(var lvl=1; lvl<=9; lvl++){
       var s = state.slots[lvl];
@@ -1043,23 +1048,20 @@ input,select,textarea{ font-family:inherit; }
       });
       h += '</div>';
     }
-    h += '</div>'; // tracker
     return h;
   }
 
   function renderSpellsTab(){
-    var main = renderRingStoringPanel();
-    main += '<div class="filter-chips">';
-    main += filterChip("all","Все");
-    main += filterChip("combat","⚔️ Бой");
-    main += filterChip("social","🗣️ Социалка");
-    main += '</div>';
-    main += renderCategory("spell", matchesSpellFilter);
-
-    var h = '<div class="spells-layout">';
-    h += '<div class="spells-sidebar">'+renderTrackerPanel()+'</div>';
-    h += '<div class="spells-main">'+main+'</div>';
+    var trackerInner = renderTrackerInner();
+    var h = '<div class="tracker tracker-fixed">'+trackerInner+'</div>';
+    h += '<div class="tracker tracker-inline">'+trackerInner+'</div>';
+    h += renderRingStoringPanel();
+    h += '<div class="filter-chips">';
+    h += filterChip("all","Все");
+    h += filterChip("combat","⚔️ Бой");
+    h += filterChip("social","🗣️ Социалка");
     h += '</div>';
+    h += renderCategory("spell", matchesSpellFilter);
     return h;
   }
   function renderInventoryTab(){
